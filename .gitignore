@@ -1,0 +1,35 @@
+# ROMs - NUNCA subir ROMs
+*.gba
+*.gbc
+*.gb
+*.smc
+*.sfc
+*.nes
+*.nds
+*.bin
+*.iso
+*.cue
+*.z64
+*.n64
+*.zip
+*.7z
+*.rar
+
+# Carpeta de ROMs
+roms/
+
+# Carpeta de datos de EmulatorJS (si se usa offline)
+data/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

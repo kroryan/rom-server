@@ -1,0 +1,12 @@
+services:
+  emulador:
+    image: nginx:alpine
+    container_name: emulador
+    ports:
+      - "4500:80"
+    volumes:
+      # Cambia esta ruta por la ubicacion de tus ROMs
+      - /ruta/a/tus/roms:/usr/share/nginx/html/roms:ro
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./config/index.html:/usr/share/nginx/html/index.html:ro
+    restart: unless-stopped

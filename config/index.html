@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis ROMs</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: #16213e; padding: 20px; text-align: center; }
+        .header h1 { color: #e94560; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .consoles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .console-btn { background: #0f3460; border: none; padding: 30px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .console-btn:hover { background: #e94560; transform: scale(1.05); }
+        .console-btn h2 { color: #fff; margin-bottom: 10px; }
+        .console-btn span { color: #aaa; }
+        .games { display: none; }
+        .games.active { display: block; }
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; max-height: 70vh; overflow-y: auto; }
+        .game { background: #0f3460; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.3s; word-break: break-word; }
+        .game:hover { background: #e94560; }
+        .back-btn { background: #e94560; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 16px; }
+        .search { width: 100%; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: none; font-size: 16px; background: #0f3460; color: #fff; }
+        .search::placeholder { color: #aaa; }
+        .loading { text-align: center; padding: 50px; font-size: 20px; }
+        #emulator-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; }
+        #emulator-overlay .close-btn { position: fixed; top: 10px; right: 10px; z-index: 1001; background: #e94560; color: #fff; border: none; padding: 15px 25px; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        #emulator-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Mis ROMs</h1>
+    </div>
+
+    <div class="container">
+        <div id="consoles-view" class="consoles">
+            <div class="loading">Cargando consolas...</div>
+        </div>
+
+        <div id="games-view" class="games">
+            <button class="back-btn" onclick="showConsoles()">← Volver a consolas</button>
+            <h2 id="console-title" style="margin-bottom: 20px; color: #e94560;"></h2>
+            <input type="text" class="search" id="search-input" placeholder="Buscar juego..." oninput="filterGames(this.value)">
+            <div id="games-list" class="games-grid"></div>
+        </div>
+    </div>
+
+    <div id="emulator-overlay">
+        <button class="close-btn" onclick="closeEmulator()">✕ Cerrar (ESC)</button>
+        <div id="emulator-container"></div>
+    </div>
+
+    <script>
+        const CONSOLES = {
+            gba: { name: 'Game Boy Advance', core: 'mgba', extensions: ['.gba'] },
+            gbc: { name: 'Game Boy Color', core: 'gambatte', extensions: ['.gbc', '.gb'] },
+            snes: { name: 'Super Nintendo', core: 'snes9x', extensions: ['.smc', '.sfc'] },
+            nds: { name: 'Nintendo DS', core: 'melonds', extensions: ['.nds'] }
+        };
+
+        let gamesData = {};
+        let currentConsole = null;
+        let allCurrentGames = [];
+
+        // Cargar lista de juegos de cada carpeta
+        async function loadGames() {
+            const consolesDiv = document.getElementById('consoles-view');
+
+            for (const [folder, info] of Object.entries(CONSOLES)) {
+                try {
+                    const response = await fetch(`/roms/${folder}/`);
+                    if (!response.ok) continue;
+
+                    const html = await response.text();
+                    const games = [];
+
+                    // Parsear el listado de nginx
+                    const regex = /<a href="([^"]+)">/g;
+                    let match;
+                    while ((match = regex.exec(html)) !== null) {
+                        const filename = decodeURIComponent(match[1]);
+                        const lowerName = filename.toLowerCase();
+
+                        if (info.extensions.some(ext => lowerName.endsWith(ext))) {
+                            games.push({
+                                name: filename.replace(/\.[^.]+$/, ''),
+                                file: filename,
+                                folder: folder,
+                                core: info.core
+                            });
+                        }
+                    }
+
+                    gamesData[folder] = games.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+                } catch (e) {
+                    console.error(`Error loading ${folder}:`, e);
+                    gamesData[folder] = [];
+                }
+            }
+
+            renderConsoles();
+        }
+
+        function renderConsoles() {
+            const container = document.getElementById('consoles-view');
+            container.innerHTML = '';
+
+            let hasGames = false;
+            for (const [folder, info] of Object.entries(CONSOLES)) {
+                const count = gamesData[folder]?.length || 0;
+                if (count > 0) {
+                    hasGames = true;
+                    const btn = document.createElement('button');
+                    btn.className = 'console-btn';
+                    btn.innerHTML = `<h2>${info.name}</h2><span>${count} juegos</span>`;
+                    btn.onclick = () => showGames(folder);
+                    container.appendChild(btn);
+                }
+            }
+
+            if (!hasGames) {
+                container.innerHTML = '<div class="loading">No se encontraron juegos. Verifica que los ROMs esten en /mnt/Expansion/roms/</div>';
+            }
+        }
+
+        function showGames(folder) {
+            currentConsole = folder;
+            allCurrentGames = gamesData[folder] || [];
+
+            document.getElementById('console-title').textContent =
+                CONSOLES[folder].name + ` (${allCurrentGames.length} juegos)`;
+            document.getElementById('consoles-view').style.display = 'none';
+            document.getElementById('games-view').classList.add('active');
+            document.getElementById('search-input').value = '';
+
+            renderGames(allCurrentGames);
+        }
+
+        function renderGames(games) {
+            const container = document.getElementById('games-list');
+            container.innerHTML = '';
+
+            if (games.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; color: #aaa;">No hay juegos que coincidan</div>';
+                return;
+            }
+
+            games.forEach(game => {
+                const div = document.createElement('div');
+                div.className = 'game';
+                div.textContent = game.name;
+                div.onclick = () => launchGame(game);
+                container.appendChild(div);
+            });
+        }
+
+        function filterGames(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderGames(allCurrentGames);
+                return;
+            }
+            const filtered = allCurrentGames.filter(g =>
+                g.name.toLowerCase().includes(q)
+            );
+            renderGames(filtered);
+        }
+
+        function showConsoles() {
+            document.getElementById('consoles-view').style.display = 'grid';
+            document.getElementById('games-view').classList.remove('active');
+            currentConsole = null;
+        }
+
+        function launchGame(game) {
+            const romUrl = `${window.location.origin}/roms/${game.folder}/${encodeURIComponent(game.file)}`;
+
+            const container = document.getElementById('emulator-container');
+            container.innerHTML = `<div id="game" style="width: 800px; height: 600px; max-width: 95vw; max-height: 80vh;"></div>`;
+
+            document.getElementById('emulator-overlay').style.display = 'block';
+
+            // Configurar EmulatorJS
+            window.EJS_player = '#game';
+            window.EJS_gameUrl = romUrl;
+            window.EJS_core = game.core;
+            window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+            window.EJS_startOnLoaded = true;
+
+            // Cargar EmulatorJS
+            const script = document.createElement('script');
+            script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+            script.onload = () => console.log('EmulatorJS loaded');
+            script.onerror = () => {
+                container.innerHTML = `<div style="color: #fff; text-align: center; padding: 50px;">
+                    <h2>Error cargando emulador</h2>
+                    <p>No se pudo cargar EmulatorJS desde el CDN.</p>
+                    <p>ROM: ${game.name}</p>
+                    <p><a href="${romUrl}" style="color: #e94560;">Descargar ROM</a></p>
+                </div>`;
+            };
+            document.body.appendChild(script);
+        }
+
+        function closeEmulator() {
+            document.getElementById('emulator-overlay').style.display = 'none';
+            document.getElementById('emulator-container').innerHTML = '';
+            // Limpiar variables de EmulatorJS
+            delete window.EJS_player;
+            delete window.EJS_gameUrl;
+            delete window.EJS_core;
+            // Recargar para limpiar estado
+            location.reload();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEmulator();
+            }
+        });
+
+        // Iniciar
+        loadGames();
+    </script>
+</body>
+</html>
