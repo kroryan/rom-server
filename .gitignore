@@ -1,4 +1,4 @@
-# ROMs - NUNCA subir ROMs
+# ROMs - Never commit ROMs
 *.gba
 *.gbc
 *.gb
@@ -6,30 +6,18 @@
 *.sfc
 *.nes
 *.nds
+*.md
 *.bin
 *.iso
 *.cue
-*.z64
-*.n64
 *.zip
 *.7z
 *.rar
 
-# Carpeta de ROMs
-roms/
-
-# Carpeta de datos de EmulatorJS (si se usa offline)
-data/
-
-# Docker
-.docker/
-
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
