@@ -512,8 +512,11 @@
                         const filename = decodeURIComponent(match[1]);
                         const lowerName = filename.toLowerCase();
                         if (info.extensions.some(ext => lowerName.endsWith(ext))) {
+                            let cleanName = filename.replace(/\.[^.]+$/, '');
+                            // Eliminar tags de region como [E], [U], [J], [T+Esp], etc.
+                            cleanName = cleanName.replace(/\s*\[[^\]]+\]\s*/g, '').trim();
                             games.push({
-                                name: filename.replace(/\.[^.]+$/, ''),
+                                name: cleanName,
                                 file: filename,
                                 folder: folder,
                                 core: info.core
@@ -1060,7 +1063,7 @@
             currentManualThumbUrl = null;
 
             document.getElementById('manual-thumb-game-name').textContent = game.name;
-            document.getElementById('manual-thumb-search').value = '';
+            document.getElementById('manual-thumb-search').value = game.name;
             document.getElementById('manual-thumb-preview').innerHTML = '<div class="no-preview">La imagen previsualizada aquí</div>';
             document.getElementById('manual-thumb-results').innerHTML = '';
             document.getElementById('manual-thumb-status').style.display = 'none';
