@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis ROMs</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%); padding: 25px; text-align: center; border-bottom: 2px solid #e94560; position: relative; }
+        .header h1 { color: #e94560; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .scan-btn { position: absolute; right: 25px; top: 50%; transform: translateY(-50%); background: #0f3460; color: #fff; border: 2px solid #e94560; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .scan-btn:hover { background: #e94560; }
+        .scan-btn.scanning { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        .consoles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .console-btn { background: linear-gradient(145deg, #0f3460, #16213e); border: 2px solid #0f3460; padding: 40px 20px; border-radius: 15px; cursor: pointer; transition: all 0.3s; text-align: center; position: relative; }
+        .console-btn:hover { background: linear-gradient(145deg, #e94560, #c73e54); border-color: #e94560; transform: translateY(-5px); box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3); }
+        .console-btn h2 { color: #fff; margin-bottom: 10px; font-size: 1.4em; }
+        .console-btn span { color: #aaa; font-size: 1.1em; display: block; }
+        .console-btn:hover span { color: #fff; }
+        .console-btn .download-pack { margin-top: 15px; background: rgba(0,0,0,0.3); color: #4ade80; border: 1px solid #4ade80; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85em; transition: all 0.3s; }
+        .console-btn .download-pack:hover { background: #4ade80; color: #000; }
+
+        .games { display: none; }
+        .games.active { display: block; }
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; max-height: 70vh; overflow-y: auto; padding: 10px; }
+
+        .game-card { background: linear-gradient(145deg, #0f3460, #16213e); border-radius: 12px; transition: all 0.3s; overflow: hidden; border: 2px solid transparent; position: relative; }
+        .game-card:hover { transform: translateY(-5px); border-color: #e94560; box-shadow: 0 10px 25px rgba(233, 69, 96, 0.3); }
+
+        .game-cover { width: 100%; height: 180px; background: #16213e; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
+        .game-cover img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .game-cover .no-cover { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 15px; text-align: center; }
+        .game-cover .no-cover .icon { font-size: 50px; margin-bottom: 10px; }
+        .game-cover .no-cover .name { font-size: 11px; color: #888; word-break: break-word; }
+
+        .game-info { padding: 10px; background: rgba(0,0,0,0.3); }
+        .game-title { text-align: center; font-size: 0.8em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; cursor: pointer; }
+        .game-title:hover { color: #e94560; }
+
+        .game-actions { display: flex; gap: 5px; justify-content: center; }
+        .btn-play, .btn-download, .btn-search-thumb { flex: 1; padding: 8px 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75em; transition: all 0.2s; }
+        .btn-play { background: #e94560; color: #fff; }
+        .btn-play:hover { background: #ff6b8a; transform: scale(1.05); }
+        .btn-download { background: #4ade80; color: #000; }
+        .btn-download:hover { background: #6ee7a0; transform: scale(1.05); }
+        .btn-search-thumb { background: #8b5cf6; color: #fff; }
+        .btn-search-thumb:hover { background: #7c3aed; transform: scale(1.05); }
+
+        .game-cover { position: relative; }
+        .search-thumb-icon { position: absolute; top: 5px; right: 5px; background: rgba(139, 92, 246, 0.9); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 10; }
+        .search-thumb-icon:hover { background: #7c3aed; transform: scale(1.1); }
+        .search-thumb-icon:active { transform: scale(0.95); }
+
+        .back-btn { background: linear-gradient(145deg, #e94560, #c73e54); color: #fff; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; }
+        .back-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4); }
+
+        .download-all-btn { background: linear-gradient(145deg, #4ade80, #22c55e); color: #000; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; font-weight: bold; }
+        .download-all-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(74, 222, 128, 0.4); }
+
+        .upload-btn { background: linear-gradient(145deg, #3b82f6, #2563eb); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; }
+        .upload-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+
+        .scan-thumbs-btn { background: linear-gradient(145deg, #f59e0b, #d97706); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; }
+        .scan-thumbs-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4); }
+
+        #upload-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        #upload-modal .upload-content { background: #16213e; padding: 40px; border-radius: 15px; text-align: center; max-width: 500px; width: 90%; }
+        #upload-modal h3 { color: #3b82f6; margin-bottom: 20px; }
+        #upload-modal .upload-area { border: 3px dashed #3b82f6; border-radius: 10px; padding: 40px; margin: 20px 0; cursor: pointer; transition: all 0.3s; }
+        #upload-modal .upload-area:hover { background: rgba(59, 130, 246, 0.1); }
+        #upload-modal .upload-area.dragover { background: rgba(59, 130, 246, 0.2); border-color: #2563eb; }
+        #upload-modal .file-list { max-height: 200px; overflow-y: auto; text-align: left; margin: 15px 0; }
+        #upload-modal .file-item { background: #0f3460; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        #upload-modal .file-item .remove-btn { background: #e94560; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        #upload-modal .upload-note { color: #888; font-size: 12px; margin-top: 15px; }
+        #upload-modal .upload-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        #upload-modal .btn-cancel { background: #64748b; color: #fff; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; }
+        #upload-modal .btn-upload { background: #3b82f6; color: #fff; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; }
+        #upload-modal .btn-upload:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #thumbs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        #thumbs-modal .thumbs-content { background: #16213e; padding: 40px; border-radius: 15px; text-align: center; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        #thumbs-modal h3 { color: #f59e0b; margin-bottom: 20px; }
+        #thumbs-modal .missing-list { max-height: 300px; overflow-y: auto; text-align: left; margin: 15px 0; }
+        #thumbs-modal .missing-item { background: #0f3460; padding: 10px; margin: 5px 0; border-radius: 5px; font-size: 14px; }
+        #thumbs-modal .missing-item.has-thumb-btn { display: flex; justify-content: space-between; align-items: center; }
+        #thumbs-modal .missing-item .search-thumb-btn { background: #3b82f6; color: #fff; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        #thumbs-modal .missing-item .search-thumb-btn:hover { background: #2563eb; }
+        #thumbs-modal .summary { color: #4ade80; font-size: 18px; margin: 15px 0; }
+        #thumbs-modal .close-thumbs { background: #64748b; color: #fff; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+
+        #manual-thumb-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2100; justify-content: center; align-items: center; }
+        #manual-thumb-modal .manual-thumb-content { background: #16213e; padding: 40px; border-radius: 15px; text-align: center; max-width: 600px; width: 90%; }
+        #manual-thumb-modal h3 { color: #8b5cf6; margin-bottom: 15px; }
+        #manual-thumb-modal .game-name { color: #fff; font-size: 18px; margin-bottom: 20px; }
+        #manual-thumb-modal .search-input-group { display: flex; gap: 10px; margin: 20px 0; }
+        #manual-thumb-modal .search-input-group input { flex: 1; padding: 12px 15px; border-radius: 8px; border: 2px solid #0f3460; font-size: 16px; background: #0f3460; color: #fff; }
+        #manual-thumb-modal .search-input-group input:focus { outline: none; border-color: #8b5cf6; }
+        #manual-thumb-modal .search-input-group button { background: #8b5cf6; color: #fff; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; }
+        #manual-thumb-modal .search-input-group button:hover { background: #7c3aed; }
+        #manual-thumb-modal .preview-area { min-height: 200px; background: #0f3460; border-radius: 10px; margin: 20px 0; display: flex; align-items: center; justify-content: center; }
+        #manual-thumb-modal .preview-area img { max-width: 100%; max-height: 300px; object-fit: contain; }
+        #manual-thumb-modal .preview-area .no-preview { color: #888; text-align: center; padding: 40px; }
+        #manual-thumb-modal .btn-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        #manual-thumb-modal .btn-save { background: #4ade80; color: #000; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #manual-thumb-modal .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+        #manual-thumb-modal .btn-cancel { background: #64748b; color: #fff; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; }
+        #manual-thumb-modal .search-results { max-height: 200px; overflow-y: auto; margin-top: 15px; text-align: left; }
+        #manual-thumb-modal .search-result-item { background: #0f3460; padding: 10px; margin: 5px 0; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        #manual-thumb-modal .search-result-item:hover { background: #1e40af; }
+        #manual-thumb-modal .search-result-item img { width: 50px; height: 50px; object-fit: contain; }
+        #manual-thumb-modal .search-result-item span { color: #fff; font-size: 12px; }
+        #manual-thumb-modal .help-text { color: #888; font-size: 12px; margin-top: 10px; }
+        #manual-thumb-modal .status-msg { margin-top: 15px; padding: 10px; border-radius: 8px; }
+        #manual-thumb-modal .status-msg.success { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        #manual-thumb-modal .status-msg.error { background: rgba(233, 69, 96, 0.2); color: #e94560; }
+
+        #libretro-search-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2200; justify-content: center; align-items: center; }
+        #libretro-search-modal .search-content { background: #16213e; padding: 30px; border-radius: 15px; text-align: center; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        #libretro-search-modal h3 { color: #8b5cf6; margin-bottom: 20px; }
+        #libretro-search-modal .search-box { display: flex; gap: 10px; margin: 20px 0; }
+        #libretro-search-modal .search-box input { flex: 1; padding: 12px 15px; border-radius: 8px; border: 2px solid #0f3460; font-size: 16px; background: #0f3460; color: #fff; }
+        #libretro-search-modal .search-box input:focus { outline: none; border-color: #8b5cf6; }
+        #libretro-search-modal .search-box button { background: #8b5cf6; color: #fff; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; }
+        #libretro-search-modal .search-box button:hover { background: #7c3aed; }
+        #libretro-search-modal .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; margin: 20px 0; }
+        #libretro-search-modal .result-item { background: #0f3460; border-radius: 10px; padding: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        #libretro-search-modal .result-item:hover { background: #1e40af; border-color: #8b5cf6; transform: scale(1.02); }
+        #libretro-search-modal .result-item img { width: 100%; height: 100px; object-fit: contain; }
+        #libretro-search-modal .result-item .name { font-size: 11px; color: #fff; margin-top: 8px; word-break: break-word; }
+        #libretro-search-modal .result-item.selected { border-color: #4ade80; background: #1e40af; }
+        #libretro-search-modal .loading { color: #888; padding: 20px; }
+        #libretro-search-modal .btn-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        #libretro-search-modal .btn-close { background: #64748b; color: #fff; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; }
+        #libretro-search-modal .btn-select { background: #4ade80; color: #000; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #libretro-search-modal .btn-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #debug-console-btn { position: fixed; bottom: 20px; left: 20px; background: #0f3460; color: #e94560; border: 2px solid #e94560; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; z-index: 100; transition: all 0.3s; }
+        #debug-console-btn:hover { background: #e94560; color: #fff; transform: scale(1.05); }
+
+        #debug-console { display: none; position: fixed; bottom: 70px; left: 20px; width: 400px; max-height: 300px; background: rgba(22, 33, 62, 0.95); border: 2px solid #e94560; border-radius: 10px; z-index: 100; overflow: hidden; }
+        #debug-console.open { display: block; }
+        #debug-console h4 { color: #e94560; padding: 10px 15px; margin: 0; border-bottom: 1px solid #e94560; display: flex; justify-content: space-between; align-items: center; }
+        #debug-console .close-debug { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; }
+        #debug-console .log-content { height: 220px; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 11px; color: #4ade80; }
+        #debug-console .log-entry { padding: 3px 0; border-bottom: 1px solid rgba(233, 69, 96, 0.2); }
+        #debug-console .log-entry.error { color: #e94560; }
+        #debug-console .log-entry .timestamp { color: #888; margin-right: 10px; }
+        #debug-console .refresh-logs { background: #e94560; color: #fff; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 12px; margin: 5px 10px; }
+        #debug-console .refresh-logs:hover { background: #ff6b8a; }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #16213e; }
+        ::-webkit-scrollbar-thumb { background: #e94560; border-radius: 5px; }
+
+        .search { width: 100%; padding: 15px 20px; margin-bottom: 20px; border-radius: 10px; border: 2px solid #0f3460; font-size: 16px; background: #16213e; color: #fff; transition: border-color 0.3s; }
+        .search:focus { outline: none; border-color: #e94560; }
+        .search::placeholder { color: #666; }
+
+        .console-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .console-header h2 { color: #e94560; flex-grow: 1; }
+
+        .loading { text-align: center; padding: 50px; font-size: 20px; color: #aaa; }
+
+        #emulator-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; }
+        #emulator-overlay .close-btn { position: fixed; top: 15px; right: 15px; z-index: 1001; background: #e94560; color: #fff; border: none; padding: 15px 30px; cursor: pointer; border-radius: 8px; font-size: 16px; }
+        #emulator-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+
+        #progress-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .progress-content { background: #16213e; padding: 40px; border-radius: 15px; text-align: center; max-width: 500px; width: 90%; }
+        .progress-content h3 { color: #e94560; margin-bottom: 20px; }
+        .progress-bar { width: 100%; height: 30px; background: #0f3460; border-radius: 15px; overflow: hidden; margin-bottom: 15px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #22c55e); transition: width 0.3s; width: 0%; }
+        .progress-text { color: #aaa; font-size: 14px; }
+        .cancel-btn { margin-top: 20px; background: #e94560; color: #fff; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #16213e; }
+        ::-webkit-scrollbar-thumb { background: #e94560; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Mis ROMs</h1>
+        <button class="scan-btn" onclick="scanLibrary()">🔄 Escanear Biblioteca</button>
+    </div>
+
+    <div class="container">
+        <div id="consoles-view" class="consoles">
+            <div class="loading">Cargando consolas...</div>
+        </div>
+
+        <div id="games-view" class="games">
+            <div class="console-header">
+                <button class="back-btn" onclick="showConsoles()">← Volver</button>
+                <h2 id="console-title"></h2>
+                <button class="scan-thumbs-btn" onclick="scanMissingThumbs()">🔍 Escanear Thumbs</button>
+                <button class="upload-btn" onclick="showUploadModal()">⬆ Subir ROMs</button>
+                <button class="download-all-btn" onclick="downloadAllRoms()">⬇ Descargar Pack Completo</button>
+            </div>
+            <input type="text" class="search" id="search-input" placeholder="Buscar juego..." oninput="filterGames(this.value)">
+            <div id="games-list" class="games-grid"></div>
+        </div>
+    </div>
+
+    <div id="emulator-overlay">
+        <button class="close-btn" onclick="closeEmulator()">✕ Cerrar (ESC)</button>
+        <div id="emulator-container"></div>
+    </div>
+
+    <div id="progress-modal">
+        <div class="progress-content">
+            <h3 id="progress-title">Preparando descarga...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p class="progress-text" id="progress-text">Iniciando...</p>
+            <button class="cancel-btn" onclick="cancelDownload()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="upload-modal">
+        <div class="upload-content">
+            <h3>⬆ Subir ROMs</h3>
+
+            <div style="margin-bottom: 15px;">
+                <label style="color: #fff; display: block; margin-bottom: 8px;">Seleccionar Consola:</label>
+                <select id="upload-console-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #0f3460; font-size: 16px; background: #0f3460; color: #fff;">
+                    <option value="">-- Selecciona una consola --</option>
+                    <option value="gba">Game Boy Advance (.gba)</option>
+                    <option value="gbc">Game Boy Color (.gbc, .gb)</option>
+                    <option value="snes">Super Nintendo (.smc, .sfc)</option>
+                    <option value="nds">Nintendo DS (.nds)</option>
+                    <option value="nes">Nintendo NES (.nes)</option>
+                </select>
+            </div>
+
+            <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+                <div>📁 Arrastra archivos aqui o haz clic para seleccionar</div>
+                <div style="color: #888; font-size: 14px; margin-top: 10px;">Formatos aceptados: <span id="accepted-formats">Selecciona una consola</span></div>
+            </div>
+            <input type="file" id="file-input" multiple style="display: none;" onchange="handleFileSelect(event)">
+            <div class="file-list" id="file-list"></div>
+            <div class="upload-note">💡 Los archivos se subirán a: <strong id="upload-folder"></strong></div>
+            <div class="upload-actions">
+                <button class="btn-cancel" onclick="closeUploadModal()">Cancelar</button>
+                <button class="btn-upload" id="btn-upload" onclick="uploadFiles()" disabled>Subir Archivos</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="thumbs-modal">
+        <div class="thumbs-content">
+            <h3>🔍 Escaneo de Thumbnails</h3>
+            <div id="thumbs-summary" class="summary"></div>
+            <div id="missing-list" class="missing-list"></div>
+            <button class="close-thumbs" onclick="closeThumbsModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="manual-thumb-modal">
+        <div class="manual-thumb-content">
+            <h3>🔍 Búsqueda Manual de Thumbnail</h3>
+            <div class="game-name" id="manual-thumb-game-name">Juego</div>
+
+            <div class="search-input-group">
+                <input type="text" id="manual-thumb-search" placeholder="Nombre del juego o URL de imagen...">
+                <button onclick="searchManualThumb()">Buscar URL</button>
+                <button onclick="openLibretroSearch()" style="background: #8b5cf6;">🔍 Buscar en Libretro</button>
+            </div>
+
+            <div class="preview-area" id="manual-thumb-preview">
+                <div class="no-preview">La imagen previsualizada aquí</div>
+            </div>
+
+            <div class="search-results" id="manual-thumb-results"></div>
+
+            <div class="status-msg" id="manual-thumb-status" style="display: none;"></div>
+
+            <div class="help-text">
+                💡 Opciones:<br>
+                - "Buscar URL": Pega una URL directa de imagen<br>
+                - "Buscar en Libretro": Busca en la base de datos de libretro-thumbnails<br>
+                - Los thumbnails se guardarán localmente
+            </div>
+
+            <div class="btn-actions">
+                <button class="btn-cancel" onclick="closeManualThumbModal()">Cancelar</button>
+                <button class="btn-save" id="btn-save-thumb" onclick="saveManualThumb()" disabled>💾 Guardar Thumbnail</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="libretro-search-modal">
+        <div class="search-content">
+            <h3>🔍 Buscar en Libretro-Thumbnails</h3>
+            <div class="search-box">
+                <input type="text" id="libretro-search-input" placeholder="Nombre del juego (ej: Pokemon Emerald)...">
+                <button onclick="searchInLibretro()">🔍 Buscar</button>
+            </div>
+            <div id="libretro-results-container" class="results-grid"></div>
+            <div class="btn-actions">
+                <button class="btn-close" onclick="closeLibretroSearchModal()">Cancelar</button>
+                <button class="btn-select" id="btn-select-libretro" onclick="selectLibretroResult()" disabled>✓ Seleccionar</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="debug-console-btn" onclick="toggleDebugConsole()">🔧 Debug</button>
+
+    <div id="debug-console">
+        <h4>
+            <span>🔧 Console de Debug</span>
+            <button class="refresh-logs" onclick="refreshDebugLogs()">🔄 Refrescar</button>
+            <button class="close-debug" onclick="toggleDebugConsole()">×</button>
+        </h4>
+        <div class="log-content" id="debug-logs">
+            <div class="log-entry"><span class="timestamp">--:--:--</span> Cargando logs...</div>
+        </div>
+    </div>
+
+    <script>
+        const CONSOLES = {
+            gba: {
+                name: 'Game Boy Advance',
+                core: 'mgba',
+                extensions: ['.gba'],
+                icon: '🎮',
+                libretro: 'Nintendo - Game Boy Advance'
+            },
+            gbc: {
+                name: 'Game Boy Color',
+                core: 'gambatte',
+                extensions: ['.gbc', '.gb'],
+                icon: '🟢',
+                libretro: 'Nintendo - Game Boy Color'
+            },
+            snes: {
+                name: 'Super Nintendo',
+                core: 'snes9x',
+                extensions: ['.smc', '.sfc'],
+                icon: '🕹️',
+                libretro: 'Nintendo - Super Nintendo Entertainment System'
+            },
+            nds: {
+                name: 'Nintendo DS',
+                core: 'melonds',
+                extensions: ['.nds'],
+                icon: '📱',
+                libretro: 'Nintendo - Nintendo DS'
+            },
+            nes: {
+                name: 'Nintendo NES',
+                core: 'fceumm',
+                extensions: ['.nes'],
+                icon: '🕹️',
+                libretro: 'Nintendo - Nintendo Entertainment System'
+            }
+        };
+
+        let gamesData = {};
+        let currentConsole = null;
+        let allCurrentGames = [];
+        let imageCache = JSON.parse(localStorage.getItem('thumbCache') || '{}');
+        let downloadCancelled = false;
+
+        function saveCache() {
+            try {
+                localStorage.setItem('thumbCache', JSON.stringify(imageCache));
+            } catch(e) {
+                // Si el cache esta lleno, limpiarlo
+                localStorage.removeItem('thumbCache');
+                imageCache = {};
+            }
+        }
+
+        // Limpiar nombre del ROM para buscar thumbnail
+        function cleanGameName(name) {
+            return name
+                // Quitar region tags como [E], [U], [J], (Europe), (USA), etc
+                .replace(/\s*[\[\(][EUJW]\]?\)?/gi, '')
+                .replace(/\s*\((Europe|USA|Japan|World|En|Fr|De|Es|It)[^\)]*\)/gi, '')
+                // Quitar version tags
+                .replace(/\s*\[!?\]?/g, '')
+                .replace(/\s*\(Rev\s*\d*\)/gi, '')
+                // Limpiar caracteres especiales
+                .replace(/[_]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        // Generar variaciones del nombre para buscar
+        function getNameVariations(name) {
+            const clean = cleanGameName(name);
+            const variations = [clean];
+
+            // Variacion con guion
+            if (!clean.includes(' - ')) {
+                const words = clean.split(' ');
+                if (words.length > 1) {
+                    variations.push(words[0] + ' - ' + words.slice(1).join(' '));
+                }
+            }
+
+            // Sin "The" al principio
+            if (clean.startsWith('The ')) {
+                variations.push(clean.substring(4));
+            }
+
+            // Algunas traducciones comunes ES -> EN
+            const translations = {
+                'Pokemon Esmeralda': 'Pokemon - Emerald Version',
+                'Pokemon Rojo Fuego': 'Pokemon - FireRed Version',
+                'Pokemon Verde Hoja': 'Pokemon - LeafGreen Version',
+                'Pokemon Zafiro': 'Pokemon - Sapphire Version',
+                'Pokemon Rubi': 'Pokemon - Ruby Version',
+                'Super Mario World': 'Super Mario World',
+                'Zelda': 'Legend of Zelda, The',
+                'Mario Kart': 'Mario Kart'
+            };
+
+            for (const [es, en] of Object.entries(translations)) {
+                if (clean.toLowerCase().includes(es.toLowerCase())) {
+                    variations.push(en);
+                }
+            }
+
+            return [...new Set(variations)];
+        }
+
+        // Probar cargar imagen directamente (evita CORS)
+        function tryLoadImage(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(url);
+                img.onerror = () => resolve(null);
+                img.src = url;
+            });
+        }
+
+        // Buscar thumbnail - primero local, luego libretro
+        async function getThumbnail(game) {
+            const cacheKey = `${game.folder}/${game.file}`;
+
+            if (imageCache[cacheKey] !== undefined) {
+                return imageCache[cacheKey];
+            }
+
+            // Intentar thumbnail local primero (descargado por el script)
+            const localUrl = `/thumbnails/${game.folder}/${encodeURIComponent(game.name)}.png`;
+            const localResult = await tryLoadImage(localUrl);
+            if (localResult) {
+                imageCache[cacheKey] = localUrl;
+                saveCache();
+                return localUrl;
+            }
+
+            // Si no hay local, intentar libretro online
+            const system = CONSOLES[game.folder]?.libretro;
+            if (!system) {
+                imageCache[cacheKey] = null;
+                saveCache();
+                return null;
+            }
+
+            const variations = getNameVariations(game.name);
+            const baseUrl = 'https://thumbnails.libretro.com';
+
+            for (const name of variations) {
+                const encodedName = encodeURIComponent(name)
+                    .replace(/%26/g, '&')
+                    .replace(/'/g, '%27');
+
+                const urls = [
+                    `${baseUrl}/${encodeURIComponent(system)}/Named_Boxarts/${encodedName}.png`,
+                    `${baseUrl}/${encodeURIComponent(system)}/Named_Snaps/${encodedName}.png`,
+                    `${baseUrl}/${encodeURIComponent(system)}/Named_Titles/${encodedName}.png`
+                ];
+
+                for (const url of urls) {
+                    const result = await tryLoadImage(url);
+                    if (result) {
+                        imageCache[cacheKey] = url;
+                        saveCache();
+                        return url;
+                    }
+                }
+            }
+
+            imageCache[cacheKey] = null;
+            saveCache();
+            return null;
+        }
+
+        async function loadGames() {
+            for (const [folder, info] of Object.entries(CONSOLES)) {
+                try {
+                    const response = await fetch(`/roms/${folder}/`);
+                    if (!response.ok) continue;
+
+                    const html = await response.text();
+                    const games = [];
+                    const regex = /<a href="([^"]+)">/g;
+                    let match;
+
+                    while ((match = regex.exec(html)) !== null) {
+                        const filename = decodeURIComponent(match[1]);
+                        const lowerName = filename.toLowerCase();
+                        if (info.extensions.some(ext => lowerName.endsWith(ext))) {
+                            games.push({
+                                name: filename.replace(/\.[^.]+$/, ''),
+                                file: filename,
+                                folder: folder,
+                                core: info.core
+                            });
+                        }
+                    }
+                    gamesData[folder] = games.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+                } catch (e) {
+                    gamesData[folder] = [];
+                }
+            }
+            renderConsoles();
+        }
+
+        function renderConsoles() {
+            const container = document.getElementById('consoles-view');
+            container.innerHTML = '';
+
+            let hasGames = false;
+            for (const [folder, info] of Object.entries(CONSOLES)) {
+                const count = gamesData[folder]?.length || 0;
+                if (count > 0) {
+                    hasGames = true;
+                    const btn = document.createElement('div');
+                    btn.className = 'console-btn';
+                    btn.innerHTML = `
+                        <h2>${info.name}</h2>
+                        <span>${count} juegos</span>
+                        <button class="download-pack" onclick="event.stopPropagation(); downloadConsolePack('${folder}')">⬇ Descargar Pack</button>
+                    `;
+                    btn.onclick = () => showGames(folder);
+                    container.appendChild(btn);
+                }
+            }
+
+            if (!hasGames) {
+                container.innerHTML = '<div class="loading">No se encontraron juegos</div>';
+            }
+        }
+
+        function showGames(folder) {
+            currentConsole = folder;
+            allCurrentGames = gamesData[folder] || [];
+
+            document.getElementById('console-title').textContent =
+                CONSOLES[folder].name + ` (${allCurrentGames.length} juegos)`;
+            document.getElementById('consoles-view').style.display = 'none';
+            document.getElementById('games-view').classList.add('active');
+            document.getElementById('search-input').value = '';
+
+            renderGames(allCurrentGames);
+        }
+
+        function createPlaceholder(game, folder) {
+            const icon = CONSOLES[folder]?.icon || '🎮';
+            const shortName = game.name.length > 30 ? game.name.substring(0, 30) + '...' : game.name;
+            return `<div class="no-cover"><div class="icon">${icon}</div><div class="name">${shortName}</div></div>`;
+        }
+
+        function renderGames(games) {
+            const container = document.getElementById('games-list');
+            container.innerHTML = '';
+
+            if (games.length === 0) {
+                container.innerHTML = '<div class="loading">No hay juegos que coincidan</div>';
+                return;
+            }
+
+            games.forEach((game, index) => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                const cacheKey = `${game.folder}/${game.file}`;
+                const cachedImg = imageCache[cacheKey];
+
+                // Si tenemos cache y es null, mostrar placeholder directamente
+                const showPlaceholder = cachedImg === null;
+                const showImage = cachedImg && cachedImg !== null;
+
+                card.innerHTML = `
+                    <div class="game-cover" id="cover-${index}" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">
+                        <button class="search-thumb-icon" onclick="event.stopPropagation(); openManualThumbModal(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])" title="Buscar thumbnail manualmente">🔍</button>
+                        ${showImage ? `<img src="${cachedImg}" alt="${game.name}" onerror="this.parentElement.innerHTML=createPlaceholder(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}], '${game.folder}')">` :
+                          showPlaceholder ? createPlaceholder(game, game.folder) :
+                          createPlaceholder(game, game.folder)}
+                    </div>
+                    <div class="game-info">
+                        <div class="game-title" title="${game.name}" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">${game.name}</div>
+                        <div class="game-actions">
+                            <button class="btn-play" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">▶ Jugar</button>
+                            <button class="btn-download" onclick="downloadRom(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">⬇ ROM</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+
+                // Cargar imagen si no está en cache
+                if (!showImage && !showPlaceholder) {
+                    loadGameImage(game, index);
+                }
+            });
+        }
+
+        async function loadGameImage(game, index) {
+            const coverDiv = document.getElementById(`cover-${index}`);
+            if (!coverDiv) return;
+
+            const imageUrl = await getThumbnail(game);
+
+            if (imageUrl) {
+                const img = new Image();
+                img.onload = () => {
+                    if (coverDiv) {
+                        coverDiv.innerHTML = `<img src="${imageUrl}" alt="${game.name}">`;
+                    }
+                };
+                img.onerror = () => {
+                    if (coverDiv) {
+                        coverDiv.innerHTML = createPlaceholder(game, game.folder);
+                    }
+                };
+                img.src = imageUrl;
+            } else {
+                if (coverDiv) {
+                    coverDiv.innerHTML = createPlaceholder(game, game.folder);
+                }
+            }
+        }
+
+        function filterGames(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderGames(allCurrentGames);
+                return;
+            }
+            const filtered = allCurrentGames.filter(g => g.name.toLowerCase().includes(q));
+            renderGames(filtered);
+        }
+
+        function showConsoles() {
+            document.getElementById('consoles-view').style.display = 'grid';
+            document.getElementById('games-view').classList.remove('active');
+            currentConsole = null;
+        }
+
+        function downloadRom(game) {
+            const url = `/roms/${game.folder}/${encodeURIComponent(game.file)}`;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = game.file;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        async function downloadConsolePack(folder) {
+            const games = gamesData[folder];
+            if (!games || games.length === 0) return;
+            await downloadPack(games, CONSOLES[folder].name);
+        }
+
+        async function downloadAllRoms() {
+            if (!currentConsole || allCurrentGames.length === 0) return;
+            await downloadPack(allCurrentGames, CONSOLES[currentConsole].name);
+        }
+
+        async function downloadPack(games, consoleName) {
+            downloadCancelled = false;
+            const modal = document.getElementById('progress-modal');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            const progressTitle = document.getElementById('progress-title');
+
+            modal.style.display = 'flex';
+            progressTitle.textContent = `Descargando ${consoleName}...`;
+            progressFill.style.width = '0%';
+            progressText.textContent = `0 / ${games.length} ROMs`;
+
+            const zip = new JSZip();
+            let completed = 0;
+
+            for (const game of games) {
+                if (downloadCancelled) {
+                    modal.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    progressText.textContent = `Descargando: ${game.name}`;
+                    const url = `/roms/${game.folder}/${encodeURIComponent(game.file)}`;
+                    const response = await fetch(url);
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        zip.file(game.file, blob);
+                    }
+                } catch (e) {
+                    console.error(`Error descargando ${game.file}:`, e);
+                }
+
+                completed++;
+                const percent = Math.round((completed / games.length) * 100);
+                progressFill.style.width = percent + '%';
+                progressText.textContent = `${completed} / ${games.length} ROMs`;
+            }
+
+            if (downloadCancelled) {
+                modal.style.display = 'none';
+                return;
+            }
+
+            progressText.textContent = 'Generando archivo ZIP...';
+
+            try {
+                const content = await zip.generateAsync({
+                    type: 'blob',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }
+                }, (metadata) => {
+                    progressFill.style.width = metadata.percent.toFixed(0) + '%';
+                });
+
+                const filename = `${consoleName.replace(/\s+/g, '_')}_ROMs.zip`;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            } catch (e) {
+                alert('Error generando el ZIP: ' + e.message);
+            }
+
+            modal.style.display = 'none';
+        }
+
+        function cancelDownload() {
+            downloadCancelled = true;
+        }
+
+        function launchGame(game) {
+            const romUrl = `${window.location.origin}/roms/${game.folder}/${encodeURIComponent(game.file)}`;
+            const container = document.getElementById('emulator-container');
+            container.innerHTML = `<div id="game" style="width: 900px; height: 700px; max-width: 95vw; max-height: 85vh;"></div>`;
+
+            document.getElementById('emulator-overlay').style.display = 'block';
+
+            window.EJS_player = '#game';
+            window.EJS_gameUrl = romUrl;
+            window.EJS_core = game.core;
+            window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+            window.EJS_startOnLoaded = true;
+
+            const script = document.createElement('script');
+            script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+            document.body.appendChild(script);
+        }
+
+        function closeEmulator() {
+            document.getElementById('emulator-overlay').style.display = 'none';
+            document.getElementById('emulator-container').innerHTML = '';
+            location.reload();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeEmulator();
+        });
+
+        async function scanLibrary() {
+            const btn = document.querySelector('.scan-btn');
+            btn.classList.add('scanning');
+            btn.textContent = '🔄 Escaneando...';
+
+            // Limpiar cache de thumbnails para forzar re-busqueda
+            localStorage.removeItem('thumbCache');
+            imageCache = {};
+
+            // Resetear datos
+            gamesData = {};
+
+            // Re-cargar juegos
+            await loadGames();
+
+            // Si estamos viendo una consola, refrescar
+            if (currentConsole) {
+                showGames(currentConsole);
+            }
+
+            btn.classList.remove('scanning');
+            btn.textContent = '🔄 Escanear Biblioteca';
+        }
+
+        // Subir ROMs
+        let selectedFiles = [];
+
+        function showUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            document.getElementById('upload-console-select').value = currentConsole || '';
+            updateUploadFormats();
+            document.getElementById('file-list').innerHTML = '';
+            selectedFiles = [];
+            document.getElementById('btn-upload').disabled = true;
+            modal.style.display = 'flex';
+        }
+
+        function updateUploadFormats() {
+            const select = document.getElementById('upload-console-select');
+            const selected = select.value;
+            const formats = CONSOLES[selected]?.extensions.join(', ') || 'Selecciona una consola';
+            document.getElementById('accepted-formats').textContent = formats;
+            document.getElementById('upload-folder').textContent = selected ? `/roms/${selected}/` : 'Selecciona una consola';
+        }
+
+        document.getElementById('upload-console-select').addEventListener('change', updateUploadFormats);
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').style.display = 'none';
+            selectedFiles = [];
+            document.getElementById('file-input').value = '';
+        }
+
+        function handleFileSelect(event) {
+            const select = document.getElementById('upload-console-select');
+            const selectedConsole = select.value;
+            const validExtensions = CONSOLES[selectedConsole]?.extensions || [];
+
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (validExtensions.includes(ext)) {
+                    selectedFiles.push(file);
+                }
+            });
+
+            updateFileList();
+        }
+
+        function updateFileList() {
+            const select = document.getElementById('upload-console-select');
+            const selectedConsole = select.value;
+            const validExtensions = CONSOLES[selectedConsole]?.extensions || [];
+
+            // Filtrar archivos que ya no son válidos
+            selectedFiles = selectedFiles.filter(file => {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                return validExtensions.includes(ext);
+            });
+
+            const list = document.getElementById('file-list');
+            list.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <span>${file.name} (${formatFileSize(file.size)})</span>
+                    <button class="remove-btn" onclick="removeFile(${index})">✕</button>
+                `;
+                list.appendChild(item);
+            });
+            document.getElementById('btn-upload').disabled = selectedFiles.length === 0 || !selectedConsole;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+
+            const modal = document.getElementById('upload-modal');
+            const btnUpload = document.getElementById('btn-upload');
+            const fileList = document.getElementById('file-list');
+
+            btnUpload.disabled = true;
+
+            // Crear barra de progreso
+            let progressDiv = document.getElementById('upload-progress');
+            if (!progressDiv) {
+                progressDiv = document.createElement('div');
+                progressDiv.id = 'upload-progress';
+                progressDiv.style.cssText = 'width: 100%; height: 20px; background: #0f3460; border-radius: 10px; overflow: hidden; margin-top: 15px;';
+                progressDiv.innerHTML = '<div class="progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4ade80, #22c55e);"></div>';
+                fileList.parentElement.insertBefore(progressDiv, fileList.nextElementSibling);
+            }
+
+            const fill = progressDiv.querySelector('.progress-fill');
+            let uploaded = 0;
+            let failed = 0;
+
+            for (const file of selectedFiles) {
+                try {
+                    // Obtener consola seleccionada
+                    const selectedConsole = document.getElementById('upload-console-select').value;
+
+                    // Usar FormData para multipart
+                    const formData = new FormData();
+                    formData.append('folder', selectedConsole);
+                    formData.append('file', file);
+
+                    // Usar el servidor de subidas en el puerto 8888
+                    const uploadServerUrl = window.location.protocol + '//' + window.location.hostname + ':8888/upload/rom';
+
+                    const response = await fetch(uploadServerUrl, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        uploaded++;
+                        const percent = Math.round((uploaded + failed) / selectedFiles.length * 100);
+                        fill.style.width = percent + '%';
+                    } else {
+                        failed++;
+                        const result = await response.json().catch(() => ({ error: 'Unknown error' }));
+                        alert(`Error subiendo ${file.name}: ${result.error || 'Error desconocido'}`);
+                    }
+                } catch (e) {
+                    failed++;
+                    alert(`Error subiendo ${file.name}: ${e.message}`);
+                }
+            }
+
+            // Recargar lista de juegos
+            if (uploaded > 0) {
+                const selectedConsole = document.getElementById('upload-console-select').value;
+                gamesData[selectedConsole] = [];
+                await loadGames();
+                if (currentConsole === selectedConsole) {
+                    showGames(currentConsole);
+                }
+                closeUploadModal();
+                alert(`✅ ${uploaded} archivos subidos correctamente` + (failed > 0 ? `\n❌ ${failed} archivos fallaron` : ''));
+            }
+
+            btnUpload.disabled = false;
+
+            // Limpiar barra de progreso
+            if (progressDiv) {
+                progressDiv.remove();
+            }
+        }
+
+        // Drag and drop para upload
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadArea = document.getElementById('upload-area');
+
+            uploadArea?.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea?.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea?.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                const select = document.getElementById('upload-console-select');
+                const selectedConsole = select.value;
+                const validExtensions = CONSOLES[selectedConsole]?.extensions || [];
+
+                files.forEach(file => {
+                    const ext = '.' + file.name.split('.').pop().toLowerCase();
+                    if (validExtensions.includes(ext)) {
+                        selectedFiles.push(file);
+                    }
+                });
+
+                updateFileList();
+            });
+        });
+
+        // Escanear thumbnails faltantes
+        async function scanMissingThumbs() {
+            if (!currentConsole || allCurrentGames.length === 0) return;
+
+            const modal = document.getElementById('thumbs-modal');
+            const summary = document.getElementById('thumbs-summary');
+            const list = document.getElementById('missing-list');
+
+            modal.style.display = 'flex';
+            summary.textContent = 'Escaneando thumbnails...';
+            list.innerHTML = '';
+
+            const gamesWithoutThumbs = [];
+            let checked = 0;
+
+            for (const game of allCurrentGames) {
+                const localUrl = `/thumbnails/${game.folder}/${encodeURIComponent(game.name)}.png`;
+                const hasLocal = await tryLoadImage(localUrl);
+
+                if (!hasLocal) {
+                    // Intentar libretro
+                    const libretroUrl = await getThumbnail(game);
+                    if (!libretroUrl) {
+                        gamesWithoutThumbs.push(game);
+                    }
+                }
+
+                checked++;
+                summary.textContent = `Escaneando: ${checked}/${allCurrentGames.length} juegos`;
+            }
+
+            // Mostrar resultados
+            if (gamesWithoutThumbs.length === 0) {
+                summary.textContent = `✅ ¡Todos los juegos tienen thumbnail! (${allCurrentGames.length} juegos)`;
+                summary.style.color = '#4ade80';
+                list.innerHTML = '<div style="text-align: center; color: #888;">No faltan thumbnails</div>';
+            } else {
+                summary.textContent = `⚠️ ${gamesWithoutThumbs.length} de ${allCurrentGames.length} juegos sin thumbnail`;
+                summary.style.color = '#f59e0b';
+
+                gamesWithoutThumbs.forEach(game => {
+                    const item = document.createElement('div');
+                    item.className = 'missing-item has-thumb-btn';
+                    item.innerHTML = `
+                        <span>${game.name}</span>
+                        <button class="search-thumb-btn" onclick='openManualThumbModal(${JSON.stringify(game)})'>🔍 Buscar</button>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+        }
+
+        function closeThumbsModal() {
+            document.getElementById('thumbs-modal').style.display = 'none';
+        }
+
+        // Búsqueda manual de thumbnails
+        let currentManualThumbGame = null;
+        let currentManualThumbUrl = null;
+
+        function openManualThumbModal(game) {
+            currentManualThumbGame = game;
+            currentManualThumbUrl = null;
+
+            document.getElementById('manual-thumb-game-name').textContent = game.name;
+            document.getElementById('manual-thumb-search').value = '';
+            document.getElementById('manual-thumb-preview').innerHTML = '<div class="no-preview">La imagen previsualizada aquí</div>';
+            document.getElementById('manual-thumb-results').innerHTML = '';
+            document.getElementById('manual-thumb-status').style.display = 'none';
+            document.getElementById('btn-save-thumb').disabled = true;
+
+            document.getElementById('manual-thumb-modal').style.display = 'flex';
+        }
+
+        function closeManualThumbModal() {
+            document.getElementById('manual-thumb-modal').style.display = 'none';
+            currentManualThumbGame = null;
+            currentManualThumbUrl = null;
+        }
+
+        async function searchManualThumb() {
+            const query = document.getElementById('manual-thumb-search').value.trim();
+            if (!query) return;
+
+            const preview = document.getElementById('manual-thumb-preview');
+            const results = document.getElementById('manual-thumb-results');
+            const status = document.getElementById('manual-thumb-status');
+
+            // Limpiar
+            results.innerHTML = '';
+            status.style.display = 'none';
+
+            // Si parece una URL directa de imagen
+            if (query.match(/^https?:\/\/.+\.(png|jpg|jpeg|gif|webp)$/i)) {
+                preview.innerHTML = '<div class="no-preview">Cargando...</div>';
+                const img = new Image();
+                img.onload = () => {
+                    preview.innerHTML = `<img src="${query}" alt="Preview">`;
+                    currentManualThumbUrl = query;
+                    document.getElementById('btn-save-thumb').disabled = false;
+                    status.textContent = '✅ Imagen cargada correctamente';
+                    status.className = 'status-msg success';
+                    status.style.display = 'block';
+                };
+                img.onerror = () => {
+                    preview.innerHTML = '<div class="no-preview">Error cargando imagen</div>';
+                    status.textContent = '❌ No se pudo cargar la imagen. Verifica la URL.';
+                    status.className = 'status-msg error';
+                    status.style.display = 'block';
+                };
+                img.src = query;
+                return;
+            }
+
+            // Si es un nombre de juego, buscar en libretro
+            const system = CONSOLES[currentManualThumbGame.folder]?.libretro;
+            if (!system) return;
+
+            preview.innerHTML = '<div class="no-preview">Buscando en libretro-thumbnails...</div>';
+
+            const baseUrl = 'https://thumbnails.libretro.com';
+            const variations = [query, `${query} (USA)`, `${query} (USA, Europe)`, `${query} (Europe)`];
+
+            let found = false;
+            for (const name of variations) {
+                const encodedName = encodeURIComponent(name)
+                    .replace(/%26/g, '&')
+                    .replace(/'/g, '%27');
+
+                const urls = [
+                    `${baseUrl}/${encodeURIComponent(system)}/Named_Boxarts/${encodedName}.png`,
+                    `${baseUrl}/${encodeURIComponent(system)}/Named_Snaps/${encodedName}.png`,
+                ];
+
+                for (const url of urls) {
+                    const result = await tryLoadImage(url);
+                    if (result) {
+                        preview.innerHTML = `<img src="${result}" alt="Preview">`;
+                        currentManualThumbUrl = result;
+                        document.getElementById('btn-save-thumb').disabled = false;
+                        status.textContent = `✅ Encontrado como: "${name}"`;
+                        status.className = 'status-msg success';
+                        status.style.display = 'block';
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+
+            if (!found) {
+                preview.innerHTML = '<div class="no-preview">No se encontró</div>';
+                status.textContent = '❌ No se encontró en libretro-thumbnails. Prueba con otro nombre o una URL directa.';
+                status.className = 'status-msg error';
+                status.style.display = 'block';
+            }
+        }
+
+        async function saveManualThumb() {
+            if (!currentManualThumbGame || !currentManualThumbUrl) return;
+
+            const status = document.getElementById('manual-thumb-status');
+            status.textContent = '💾 Guardando thumbnail...';
+            status.className = 'status-msg';
+            status.style.display = 'block';
+
+            try {
+                // Usar el servidor de subidas en el puerto 8888
+                const uploadServerUrl = window.location.protocol + '//' + window.location.hostname + ':8888/upload/thumbnail';
+
+                const response = await fetch(uploadServerUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        game: currentManualThumbGame.name,
+                        folder: currentManualThumbGame.folder,
+                        url: currentManualThumbUrl
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    status.textContent = '✅ Thumbnail guardado correctamente';
+                    status.className = 'status-msg success';
+
+                    // Actualizar cache
+                    const cacheKey = `${currentManualThumbGame.folder}/${currentManualThumbGame.file}`;
+                    imageCache[cacheKey] = `/thumbnails/${currentManualThumbGame.folder}/${encodeURIComponent(currentManualThumbGame.name)}.png`;
+                    saveCache();
+
+                    // Actualizar vista
+                    setTimeout(() => {
+                        closeManualThumbModal();
+                        renderGames(allCurrentGames);
+                    }, 1500);
+                } else {
+                    throw new Error('Error guardando thumbnail');
+                }
+            } catch (e) {
+                status.textContent = '❌ Error: ' + e.message;
+                status.className = 'status-msg error';
+            }
+        }
+
+        // Consola de debug
+        let debugConsoleOpen = false;
+
+        function toggleDebugConsole() {
+            debugConsoleOpen = !debugConsoleOpen;
+            const console = document.getElementById('debug-console');
+            if (debugConsoleOpen) {
+                console.classList.add('open');
+                refreshDebugLogs();
+            } else {
+                console.classList.remove('open');
+            }
+        }
+
+        async function refreshDebugLogs() {
+            const logContent = document.getElementById('debug-logs');
+            logContent.innerHTML = '<div class="log-entry">Cargando logs...</div>';
+
+            try {
+                const uploadServerUrl = window.location.protocol + '//' + window.location.hostname + ':8888/logs';
+                const response = await fetch(uploadServerUrl);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    logContent.innerHTML = '';
+
+                    if (data.logs && data.logs.length > 0) {
+                        data.logs.forEach(log => {
+                            const entry = document.createElement('div');
+                            entry.className = 'log-entry' + (log.includes('Error') || log.includes('error') ? ' error' : '');
+
+                            // Parse timestamp
+                            const match = log.match(/\[([^\]]+)\]/);
+                            const timestamp = match ? match[1] : '--:--:--';
+                            const message = log.replace(/\[[^\]]+\]\s*/, '');
+
+                            entry.innerHTML = `<span class="timestamp">${timestamp}</span>${message}`;
+                            logContent.appendChild(entry);
+                        });
+                    } else {
+                        logContent.innerHTML = '<div class="log-entry">No hay logs disponibles</div>';
+                    }
+                } else {
+                    logContent.innerHTML = '<div class="log-entry error">Error cargando logs: ' + response.status + '</div>';
+                }
+            } catch (e) {
+                logContent.innerHTML = '<div class="log-entry error">Error de conexión: ' + e.message + '</div>';
+            }
+        }
+
+        // Búsqueda en Libretro-Thumbnails
+        let selectedLibretroResult = null;
+
+        function openLibretroSearch() {
+            const modal = document.getElementById('libretro-search-modal');
+            const searchInput = document.getElementById('libretro-search-input');
+            const resultsContainer = document.getElementById('libretro-results-container');
+
+            searchInput.value = '';
+            resultsContainer.innerHTML = '<div class="loading">Escribe un nombre para buscar...</div>';
+            document.getElementById('btn-select-libretro').disabled = true;
+            selectedLibretroResult = null;
+
+            modal.style.display = 'flex';
+            searchInput.focus();
+        }
+
+        function closeLibretroSearchModal() {
+            document.getElementById('libretro-search-modal').style.display = 'none';
+        }
+
+        async function searchInLibretro() {
+            const query = document.getElementById('libretro-search-input').value.trim();
+            const resultsContainer = document.getElementById('libretro-results-container');
+            const system = CONSOLES[currentManualThumbGame.folder]?.libretro;
+
+            if (!query || !system) {
+                resultsContainer.innerHTML = '<div class="loading">Ingresa un nombre de juego</div>';
+                return;
+            }
+
+            resultsContainer.innerHTML = '<div class="loading">Buscando en libretro-thumbnails...</div>';
+
+            try {
+                // Buscar usando la API de GitHub para listar archivos
+                const repoName = system.replace(' ', '_');
+                const url = `https://api.github.com/repos/libretro-thumbnails/${repoName}/contents/Named_Boxarts`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error buscando en libretro');
+
+                const data = await response.json();
+                const games = data
+                    .filter(item => item.name && item.name.endsWith('.png'))
+                    .map(item => item.name.replace('.png', ''))
+                    .filter(name => name.toLowerCase().includes(query.toLowerCase()))
+                    .slice(0, 50); // Limitar a 50 resultados
+
+                if (games.length === 0) {
+                    resultsContainer.innerHTML = '<div class="loading" style="grid-column: 1/-1;">No se encontraron resultados. Intenta con otro nombre.</div>';
+                    return;
+                }
+
+                resultsContainer.innerHTML = '';
+                games.forEach(game => {
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.onclick = () => selectLibretroResult(game);
+                    item.innerHTML = `
+                        <img src="https://raw.githubusercontent.com/libretro-thumbnails/${repoName}/master/Named_Boxarts/${encodeURIComponent(game)}.png" alt="${game}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%2333444%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 fill=%22%233%22 font-size=%2230%22>?</text></svg>'">
+                        <div class="name">${game.substring(0, 30)}${game.length > 30 ? '...' : ''}</div>
+                    `;
+                    resultsContainer.appendChild(item);
+                });
+
+            } catch (e) {
+                resultsContainer.innerHTML = '<div class="loading error" style="grid-column: 1/-1;">Error: ' + e.message + '</div>';
+            }
+        }
+
+        function selectLibretroResult(game) {
+            // Remover selección anterior
+            document.querySelectorAll('#libretro-results-container .result-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Seleccionar este
+            event.currentTarget.classList.add('selected');
+
+            const repoName = CONSOLES[currentManualThumbGame.folder]?.libretro.replace(' ', '_');
+            const imageUrl = `https://raw.githubusercontent.com/libretro-thumbnails/${repoName}/master/Named_Boxarts/${encodeURIComponent(game)}.png`;
+
+            selectedLibretroResult = imageUrl;
+            document.getElementById('btn-select-libretro').disabled = false;
+
+            // Mostrar preview en el modal principal
+            document.getElementById('manual-thumb-preview').innerHTML = `<img src="${imageUrl}" alt="Preview">`;
+            document.getElementById('manual-thumb-search').value = game;
+            currentManualThumbUrl = imageUrl;
+            document.getElementById('btn-save-thumb').disabled = false;
+
+            // Cerrar modal de búsqueda
+            closeLibretroSearchModal();
+        }
+
+        // Permitir buscar con Enter
+        document.addEventListener('DOMContentLoaded', () => {
+            const libretroInput = document.getElementById('libretro-search-input');
+            if (libretroInput) {
+                libretroInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        searchInLibretro();
+                    }
+                });
+            }
+        });
+
+        loadGames();
+    </script>
+</body>
+</html>
