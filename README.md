@@ -25,6 +25,7 @@ Un servidor web ligero y autoalojado para gestionar y jugar tus ROMs directament
 - **🔍 Escaneo de thumbnails** - Identifica juegos sin caratula y añadelas manualmente
 - **🔧 Consola de debug** - Botón flotante para ver logs del servidor en tiempo real
 - **💾 Descarga local de thumbnails** - Script Python para descargar thumbnails en lote
+- **🎮 Todas las consolas visibles** - Todas las consolas se muestran incluso con 0 juegos para permitir subidas
 
 ## Consolas soportados
 
@@ -51,49 +52,38 @@ git clone https://github.com/kroryan/rom-server.git
 cd rom-server
 ```
 
-### 2. Organiza tus ROMs
+### 2. Configura docker-compose.yml
 
-Crea una carpeta con tus ROMs organizados por consola:
-
-```
-/ruta/a/tus/roms/
-├── gba/
-│   ├── Pokemon Esmeralda.gba
-│   └── Mario Kart Super Circuit.gba
-├── gbc/
-│   ├── Pokemon Amarillo.gbc
-│   └── Zelda Links Awakening.gbc
-├── snes/
-│   ├── Super Mario World.smc
-│   └── Chrono Trigger.sfc
-└── nds/
-    ├── Pokemon Platino.nds
-    └── Mario Kart DS.nds
-```
-
-### 3. Configura docker-compose.yml
-
-Edita `docker-compose.yml` y cambia la ruta de los ROMs:
+Edita `docker-compose.yml` y cambia las rutas a tus carpetas:
 
 ```yaml
 volumes:
-  - /TU/RUTA/A/ROMS:/usr/share/nginx/html/roms:ro
-  - /TU/RUTA/A/thumbnails:/usr/share/nginx/html/thumbnails:rw
+  - /TU/RUTA/A/ROMS:/usr/share/nginx/html/roms:rw       # Tus ROMs (rw para permitir subidas)
+  - /TU/RUTA/A/thumbnails:/usr/share/nginx/html/thumbnails:rw  # Carpeta para thumbnails
 ```
 
-### 4. Crea las carpetas necesarias
+### 3. Crea las carpetas necesarias
 
 ```bash
+# Crear carpeta de ROMs
+mkdir -p /TU/RUTA/A/ROMS
+
+# Crear carpeta de thumbnails
 mkdir -p /TU/RUTA/A/thumbnails
+
+# (Opcional) Crear subcarpetas para cada consola
+mkdir -p /TU/RUTA/A/ROMS/{gba,gbc,snes,nds,nes}
 ```
 
-### 5. Inicia el servidor
+> **Nota:** No es necesario crear las carpetas de las consolas. El sistema mostrará todas las consolas disponibles (incluso con 0 juegos) y podrás subir ROMs desde la interfaz web.
+
+### 4. Inicia el servidor
 
 ```bash
 docker compose up -d
 ```
 
-### 6. Accede desde el navegador
+### 5. Accede desde el navegador
 
 Abre `http://TU_IP:4500` en tu navegador.
 
@@ -102,6 +92,18 @@ Abre `http://TU_IP:4500` en tu navegador.
 - Contraseña: `gamer123`
 
 ## Uso de la Interfaz
+
+### Empezar sin ROMs (desde cero)
+
+Si acabas de instalar el servidor y no tienes ROMs aún:
+
+1. Todas las consolas aparecerán en la pantalla principal mostrando "0 juegos"
+2. Haz clic en cualquier consola (ej: Game Boy Advance)
+3. Verás un mensaje indicando que no hay juegos
+4. Haz clic en el botón **⬆ Subir ROMs** arriba a la derecha
+5. Selecciona la consola donde quieres subir el juego
+6. Arrastra tus archivos ROM o haz clic para seleccionarlos
+7. Los archivos se subirán automáticamente y aparecerán en la lista
 
 ### Búsqueda Manual de Thumbnails
 
@@ -122,6 +124,8 @@ Abre `http://TU_IP:4500` en tu navegador.
 2. Selecciona la consola destino del desplegable
 3. Arrastra archivos o haz clic para seleccionar
 4. Los archivos se suben automáticamente a la carpeta de la consola
+
+> **Nota:** Los nombres de los ROMs se limpian automáticamente. Los tags de región como `[E]`, `[U]`, `[J]`, `[T+Esp]`, etc. se eliminan para facilitar la búsqueda de thumbnails.
 
 ### Escaneo de Thumbnails
 
@@ -147,6 +151,7 @@ python3 download_thumbnails.py
 Este script:
 - Busca en libretro-thumbnails los thumbnails de todos tus ROMs
 - Aplica traducciones automáticas (ES -> EN)
+- Elimina tags de región ([E], [U], [J], etc.) de los nombres
 - Guarda los thumbnails localmente para acceso rápido
 - Compatible con las extensiones de las consolas soportadas
 

@@ -535,25 +535,20 @@
             const container = document.getElementById('consoles-view');
             container.innerHTML = '';
 
-            let hasGames = false;
             for (const [folder, info] of Object.entries(CONSOLES)) {
                 const count = gamesData[folder]?.length || 0;
-                if (count > 0) {
-                    hasGames = true;
-                    const btn = document.createElement('div');
-                    btn.className = 'console-btn';
-                    btn.innerHTML = `
-                        <h2>${info.name}</h2>
-                        <span>${count} juegos</span>
-                        <button class="download-pack" onclick="event.stopPropagation(); downloadConsolePack('${folder}')">⬇ Descargar Pack</button>
-                    `;
-                    btn.onclick = () => showGames(folder);
-                    container.appendChild(btn);
-                }
-            }
-
-            if (!hasGames) {
-                container.innerHTML = '<div class="loading">No se encontraron juegos</div>';
+                const btn = document.createElement('div');
+                btn.className = 'console-btn';
+                const downloadBtn = count > 0 ?
+                    `<button class="download-pack" onclick="event.stopPropagation(); downloadConsolePack('${folder}')">⬇ Descargar Pack</button>` :
+                    `<span class="download-pack" style="cursor: default; opacity: 0.5;">⬇ Sin juegos</span>`;
+                btn.innerHTML = `
+                    <h2>${info.name}</h2>
+                    <span>${count} juegos</span>
+                    ${downloadBtn}
+                `;
+                btn.onclick = () => showGames(folder);
+                container.appendChild(btn);
             }
         }
 
@@ -581,7 +576,13 @@
             container.innerHTML = '';
 
             if (games.length === 0) {
-                container.innerHTML = '<div class="loading">No hay juegos que coincidan</div>';
+                container.innerHTML = `
+                    <div class="loading" style="text-align: center; padding: 50px;">
+                        <div style="font-size: 60px; margin-bottom: 20px;">🎮</div>
+                        <div style="margin-bottom: 15px;">No hay juegos en esta consola</div>
+                        <div style="color: #888;">Sube tus ROMs usando el botón ⬆ Subir ROMs</div>
+                    </div>
+                `;
                 return;
             }
 
