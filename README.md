@@ -32,10 +32,18 @@ Un servidor web ligero y autoalojado para gestionar y jugar tus ROMs directament
 | Consola | Extensiones | Core EmulatorJS |
 |---------|-------------|-----------------|
 | Game Boy Advance | `.gba` | mgba |
-| Game Boy / Game Boy Color | `.gb`, `.gbc` | gambatte |
+| Game Boy Color | `.gbc` | gambatte |
+| Game Boy | `.gb` | gambatte |
 | Super Nintendo | `.smc`, `.sfc` | snes9x |
 | Nintendo DS | `.nds` | melonds |
-| NES | `.nes` | fceumm |
+| Nintendo NES | `.nes` | fceumm |
+| Nintendo 64 | `.n64`, `.z64`, `.v64` | mupen64plus_next |
+| Sega Genesis / Mega Drive | `.genesis`, `.md`, `.smd` | genesis_plus_gx |
+| Sega Master System | `.sms` | genesis_plus_gx |
+| Sega Game Gear | `.gg` | genesis_plus_gx |
+| Atari 2600 | `.a26` | stella |
+| PC Engine / TurboGrafx-16 | `.pce` | mednafen_pce_fast |
+| Virtual Boy | `.vb` | mednafen_vb |
 
 ## Requisitos
 
@@ -72,7 +80,7 @@ mkdir -p /TU/RUTA/A/ROMS
 mkdir -p /TU/RUTA/A/thumbnails
 
 # (Opcional) Crear subcarpetas para cada consola
-mkdir -p /TU/RUTA/A/ROMS/{gba,gbc,snes,nds,nes}
+mkdir -p /TU/RUTA/A/ROMS/{gba,gbc,gb,snes,nds,nes,n64,genesis,sms,gg,atari2600,pce,vb}
 ```
 
 > **Nota:** No es necesario crear las carpetas de las consolas. El sistema mostrará todas las consolas disponibles (incluso con 0 juegos) y podrás subir ROMs desde la interfaz web.
