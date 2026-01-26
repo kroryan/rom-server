@@ -13,6 +13,10 @@ Un servidor web ligero y autoalojado para gestionar y jugar tus ROMs directament
 - **Ligero** - Solo usa nginx:alpine (~20MB)
 - **Busqueda integrada** - Encuentra tus juegos rapidamente
 - **Responsive** - Funciona en PC, tablet y movil
+- **Descarga de ROMs** - Descarga ROMs individuales o packs completos por consola (ZIP)
+- **Thumbnails** - Muestra caratulas de los juegos (desde libretro-thumbnails o locales)
+- **Escaneo de biblioteca** - Boton para re-escanear y detectar nuevos juegos
+- **Autenticacion** - Proteccion con usuario y contrasena (opcional)
 
 ## Consolas soportadas
 
@@ -91,6 +95,45 @@ rom-server/
 └── README.md
 ```
 
+## Autenticacion
+
+El servidor puede protegerse con usuario y contrasena usando autenticacion basica de nginx.
+
+### Credenciales por defecto
+
+- **Usuario:** `gamer`
+- **Contrasena:** `gamer123`
+
+### Configurar autenticacion
+
+1. Genera el archivo `.htpasswd`:
+
+```bash
+# Instala htpasswd si no lo tienes
+apt install apache2-utils
+
+# Crea el archivo con tu usuario
+htpasswd -c config/.htpasswd tu_usuario
+```
+
+2. Anade el volumen en `docker-compose.yml`:
+
+```yaml
+volumes:
+  - ./config/.htpasswd:/etc/nginx/.htpasswd:ro
+```
+
+3. Asegurate que `nginx.conf` incluya:
+
+```nginx
+auth_basic "Zona Privada - Mis ROMs";
+auth_basic_user_file /etc/nginx/.htpasswd;
+```
+
+### Desactivar autenticacion
+
+Comenta o elimina las lineas de `auth_basic` en `config/nginx.conf`.
+
 ## Configuracion avanzada
 
 ### Cambiar el puerto
@@ -115,6 +158,19 @@ const CONSOLES = {
 ```
 
 Luego crea la carpeta correspondiente en tu directorio de ROMs.
+
+### Thumbnails / Caratulas
+
+Por defecto, los thumbnails se cargan desde [libretro-thumbnails](https://thumbnails.libretro.com/).
+
+Para descargar los thumbnails localmente (mejor rendimiento):
+
+```bash
+# Ejecuta el script de descarga
+python3 config/download_thumbnails.py
+```
+
+Esto descargara las caratulas a la carpeta `thumbnails/` que sera servida por nginx.
 
 ### Usar sin internet (offline completo)
 

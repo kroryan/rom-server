@@ -8,106 +8,317 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
-        .header { background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%); padding: 25px; text-align: center; border-bottom: 2px solid #e94560; }
+        .header { background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%); padding: 25px; text-align: center; border-bottom: 2px solid #e94560; position: relative; }
         .header h1 { color: #e94560; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .scan-btn { position: absolute; right: 25px; top: 50%; transform: translateY(-50%); background: #0f3460; color: #fff; border: 2px solid #e94560; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .scan-btn:hover { background: #e94560; }
+        .scan-btn.scanning { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
         .consoles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; margin-bottom: 30px; }
-        .console-btn { background: linear-gradient(145deg, #0f3460, #16213e); border: 2px solid #0f3460; padding: 40px 20px; border-radius: 15px; cursor: pointer; transition: all 0.3s; text-align: center; }
+        .console-btn { background: linear-gradient(145deg, #0f3460, #16213e); border: 2px solid #0f3460; padding: 40px 20px; border-radius: 15px; cursor: pointer; transition: all 0.3s; text-align: center; position: relative; }
         .console-btn:hover { background: linear-gradient(145deg, #e94560, #c73e54); border-color: #e94560; transform: translateY(-5px); box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3); }
         .console-btn h2 { color: #fff; margin-bottom: 10px; font-size: 1.4em; }
         .console-btn span { color: #aaa; font-size: 1.1em; display: block; }
         .console-btn:hover span { color: #fff; }
         .console-btn .download-pack { margin-top: 15px; background: rgba(0,0,0,0.3); color: #4ade80; border: 1px solid #4ade80; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85em; transition: all 0.3s; }
         .console-btn .download-pack:hover { background: #4ade80; color: #000; }
+
         .games { display: none; }
         .games.active { display: block; }
         .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; max-height: 70vh; overflow-y: auto; padding: 10px; }
-        .game-card { background: linear-gradient(145deg, #0f3460, #16213e); border-radius: 12px; transition: all 0.3s; overflow: hidden; border: 2px solid transparent; }
+
+        .game-card { background: linear-gradient(145deg, #0f3460, #16213e); border-radius: 12px; transition: all 0.3s; overflow: hidden; border: 2px solid transparent; position: relative; }
         .game-card:hover { transform: translateY(-5px); border-color: #e94560; box-shadow: 0 10px 25px rgba(233, 69, 96, 0.3); }
-        .game-cover { width: 100%; height: 180px; background: #16213e; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .game-cover { width: 100%; height: 180px; background: #16213e; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
+        .game-cover img { max-width: 100%; max-height: 100%; object-fit: contain; }
         .game-cover .no-cover { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 15px; text-align: center; }
         .game-cover .no-cover .icon { font-size: 50px; margin-bottom: 10px; }
         .game-cover .no-cover .name { font-size: 11px; color: #888; word-break: break-word; }
+
         .game-info { padding: 10px; background: rgba(0,0,0,0.3); }
         .game-title { text-align: center; font-size: 0.8em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; cursor: pointer; }
         .game-title:hover { color: #e94560; }
+
         .game-actions { display: flex; gap: 5px; justify-content: center; }
         .btn-play, .btn-download { flex: 1; padding: 8px 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75em; transition: all 0.2s; }
         .btn-play { background: #e94560; color: #fff; }
         .btn-play:hover { background: #ff6b8a; transform: scale(1.05); }
         .btn-download { background: #4ade80; color: #000; }
         .btn-download:hover { background: #6ee7a0; transform: scale(1.05); }
+
         .back-btn { background: linear-gradient(145deg, #e94560, #c73e54); color: #fff; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; }
-        .download-all-btn { background: linear-gradient(145deg, #4ade80, #22c55e); color: #000; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        .search { width: 100%; padding: 15px 20px; margin-bottom: 20px; border-radius: 10px; border: 2px solid #0f3460; font-size: 16px; background: #16213e; color: #fff; }
+        .back-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4); }
+
+        .download-all-btn { background: linear-gradient(145deg, #4ade80, #22c55e); color: #000; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; font-weight: bold; }
+        .download-all-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(74, 222, 128, 0.4); }
+
+        .search { width: 100%; padding: 15px 20px; margin-bottom: 20px; border-radius: 10px; border: 2px solid #0f3460; font-size: 16px; background: #16213e; color: #fff; transition: border-color 0.3s; }
         .search:focus { outline: none; border-color: #e94560; }
+        .search::placeholder { color: #666; }
+
         .console-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
         .console-header h2 { color: #e94560; flex-grow: 1; }
+
         .loading { text-align: center; padding: 50px; font-size: 20px; color: #aaa; }
+
         #emulator-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; }
         #emulator-overlay .close-btn { position: fixed; top: 15px; right: 15px; z-index: 1001; background: #e94560; color: #fff; border: none; padding: 15px 30px; cursor: pointer; border-radius: 8px; font-size: 16px; }
         #emulator-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+
         #progress-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
         .progress-content { background: #16213e; padding: 40px; border-radius: 15px; text-align: center; max-width: 500px; width: 90%; }
         .progress-content h3 { color: #e94560; margin-bottom: 20px; }
         .progress-bar { width: 100%; height: 30px; background: #0f3460; border-radius: 15px; overflow: hidden; margin-bottom: 15px; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #22c55e); width: 0%; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #22c55e); transition: width 0.3s; width: 0%; }
         .progress-text { color: #aaa; font-size: 14px; }
         .cancel-btn { margin-top: 20px; background: #e94560; color: #fff; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #16213e; }
+        ::-webkit-scrollbar-thumb { background: #e94560; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>Mis ROMs</h1></div>
+    <div class="header">
+        <h1>Mis ROMs</h1>
+        <button class="scan-btn" onclick="scanLibrary()">🔄 Escanear Biblioteca</button>
+    </div>
+
     <div class="container">
-        <div id="consoles-view" class="consoles"><div class="loading">Cargando consolas...</div></div>
+        <div id="consoles-view" class="consoles">
+            <div class="loading">Cargando consolas...</div>
+        </div>
+
         <div id="games-view" class="games">
             <div class="console-header">
                 <button class="back-btn" onclick="showConsoles()">← Volver</button>
                 <h2 id="console-title"></h2>
-                <button class="download-all-btn" onclick="downloadAllRoms()">⬇ Descargar Pack</button>
+                <button class="download-all-btn" onclick="downloadAllRoms()">⬇ Descargar Pack Completo</button>
             </div>
             <input type="text" class="search" id="search-input" placeholder="Buscar juego..." oninput="filterGames(this.value)">
             <div id="games-list" class="games-grid"></div>
         </div>
     </div>
+
     <div id="emulator-overlay">
         <button class="close-btn" onclick="closeEmulator()">✕ Cerrar (ESC)</button>
         <div id="emulator-container"></div>
     </div>
+
     <div id="progress-modal">
         <div class="progress-content">
             <h3 id="progress-title">Preparando descarga...</h3>
-            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
             <p class="progress-text" id="progress-text">Iniciando...</p>
             <button class="cancel-btn" onclick="cancelDownload()">Cancelar</button>
         </div>
     </div>
+
     <script>
         const CONSOLES = {
-            gba: { name: 'Game Boy Advance', core: 'mgba', extensions: ['.gba'], icon: '🎮' },
-            gbc: { name: 'Game Boy Color', core: 'gambatte', extensions: ['.gbc', '.gb'], icon: '🟢' },
-            snes: { name: 'Super Nintendo', core: 'snes9x', extensions: ['.smc', '.sfc'], icon: '🕹️' },
-            nds: { name: 'Nintendo DS', core: 'melonds', extensions: ['.nds'], icon: '📱' },
-            nes: { name: 'Nintendo NES', core: 'fceumm', extensions: ['.nes'], icon: '🕹️' }
+            gba: {
+                name: 'Game Boy Advance',
+                core: 'mgba',
+                extensions: ['.gba'],
+                icon: '🎮',
+                libretro: 'Nintendo - Game Boy Advance'
+            },
+            gbc: {
+                name: 'Game Boy Color',
+                core: 'gambatte',
+                extensions: ['.gbc', '.gb'],
+                icon: '🟢',
+                libretro: 'Nintendo - Game Boy Color'
+            },
+            snes: {
+                name: 'Super Nintendo',
+                core: 'snes9x',
+                extensions: ['.smc', '.sfc'],
+                icon: '🕹️',
+                libretro: 'Nintendo - Super Nintendo Entertainment System'
+            },
+            nds: {
+                name: 'Nintendo DS',
+                core: 'melonds',
+                extensions: ['.nds'],
+                icon: '📱',
+                libretro: 'Nintendo - Nintendo DS'
+            },
+            nes: {
+                name: 'Nintendo NES',
+                core: 'fceumm',
+                extensions: ['.nes'],
+                icon: '🕹️',
+                libretro: 'Nintendo - Nintendo Entertainment System'
+            }
         };
-        let gamesData = {}, currentConsole = null, allCurrentGames = [], downloadCancelled = false;
+
+        let gamesData = {};
+        let currentConsole = null;
+        let allCurrentGames = [];
+        let imageCache = JSON.parse(localStorage.getItem('thumbCache') || '{}');
+        let downloadCancelled = false;
+
+        function saveCache() {
+            try {
+                localStorage.setItem('thumbCache', JSON.stringify(imageCache));
+            } catch(e) {
+                // Si el cache esta lleno, limpiarlo
+                localStorage.removeItem('thumbCache');
+                imageCache = {};
+            }
+        }
+
+        // Limpiar nombre del ROM para buscar thumbnail
+        function cleanGameName(name) {
+            return name
+                // Quitar region tags como [E], [U], [J], (Europe), (USA), etc
+                .replace(/\s*[\[\(][EUJW]\]?\)?/gi, '')
+                .replace(/\s*\((Europe|USA|Japan|World|En|Fr|De|Es|It)[^\)]*\)/gi, '')
+                // Quitar version tags
+                .replace(/\s*\[!?\]?/g, '')
+                .replace(/\s*\(Rev\s*\d*\)/gi, '')
+                // Limpiar caracteres especiales
+                .replace(/[_]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        // Generar variaciones del nombre para buscar
+        function getNameVariations(name) {
+            const clean = cleanGameName(name);
+            const variations = [clean];
+
+            // Variacion con guion
+            if (!clean.includes(' - ')) {
+                const words = clean.split(' ');
+                if (words.length > 1) {
+                    variations.push(words[0] + ' - ' + words.slice(1).join(' '));
+                }
+            }
+
+            // Sin "The" al principio
+            if (clean.startsWith('The ')) {
+                variations.push(clean.substring(4));
+            }
+
+            // Algunas traducciones comunes ES -> EN
+            const translations = {
+                'Pokemon Esmeralda': 'Pokemon - Emerald Version',
+                'Pokemon Rojo Fuego': 'Pokemon - FireRed Version',
+                'Pokemon Verde Hoja': 'Pokemon - LeafGreen Version',
+                'Pokemon Zafiro': 'Pokemon - Sapphire Version',
+                'Pokemon Rubi': 'Pokemon - Ruby Version',
+                'Super Mario World': 'Super Mario World',
+                'Zelda': 'Legend of Zelda, The',
+                'Mario Kart': 'Mario Kart'
+            };
+
+            for (const [es, en] of Object.entries(translations)) {
+                if (clean.toLowerCase().includes(es.toLowerCase())) {
+                    variations.push(en);
+                }
+            }
+
+            return [...new Set(variations)];
+        }
+
+        // Probar cargar imagen directamente (evita CORS)
+        function tryLoadImage(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(url);
+                img.onerror = () => resolve(null);
+                img.src = url;
+            });
+        }
+
+        // Buscar thumbnail - primero local, luego libretro
+        async function getThumbnail(game) {
+            const cacheKey = `${game.folder}/${game.file}`;
+
+            if (imageCache[cacheKey] !== undefined) {
+                return imageCache[cacheKey];
+            }
+
+            // Intentar thumbnail local primero (descargado por el script)
+            const localUrl = `/thumbnails/${game.folder}/${encodeURIComponent(game.name)}.png`;
+            const localResult = await tryLoadImage(localUrl);
+            if (localResult) {
+                imageCache[cacheKey] = localUrl;
+                saveCache();
+                return localUrl;
+            }
+
+            // Si no hay local, intentar libretro online
+            const system = CONSOLES[game.folder]?.libretro;
+            if (!system) {
+                imageCache[cacheKey] = null;
+                saveCache();
+                return null;
+            }
+
+            const variations = getNameVariations(game.name);
+            const baseUrl = 'https://thumbnails.libretro.com';
+
+            for (const name of variations) {
+                const encodedName = encodeURIComponent(name)
+                    .replace(/%26/g, '&')
+                    .replace(/'/g, '%27');
+
+                const urls = [
+                    `${baseUrl}/${encodeURIComponent(system)}/Named_Boxarts/${encodedName}.png`,
+                    `${baseUrl}/${encodeURIComponent(system)}/Named_Snaps/${encodedName}.png`,
+                    `${baseUrl}/${encodeURIComponent(system)}/Named_Titles/${encodedName}.png`
+                ];
+
+                for (const url of urls) {
+                    const result = await tryLoadImage(url);
+                    if (result) {
+                        imageCache[cacheKey] = url;
+                        saveCache();
+                        return url;
+                    }
+                }
+            }
+
+            imageCache[cacheKey] = null;
+            saveCache();
+            return null;
+        }
 
         async function loadGames() {
             for (const [folder, info] of Object.entries(CONSOLES)) {
                 try {
-                    const response = await fetch('/roms/' + folder + '/');
+                    const response = await fetch(`/roms/${folder}/`);
                     if (!response.ok) continue;
+
                     const html = await response.text();
-                    const games = [], regex = /<a href="([^"]+)">/g;
+                    const games = [];
+                    const regex = /<a href="([^"]+)">/g;
                     let match;
+
                     while ((match = regex.exec(html)) !== null) {
                         const filename = decodeURIComponent(match[1]);
-                        if (info.extensions.some(ext => filename.toLowerCase().endsWith(ext))) {
-                            games.push({ name: filename.replace(/\.[^.]+$/, ''), file: filename, folder: folder, core: info.core });
+                        const lowerName = filename.toLowerCase();
+                        if (info.extensions.some(ext => lowerName.endsWith(ext))) {
+                            games.push({
+                                name: filename.replace(/\.[^.]+$/, ''),
+                                file: filename,
+                                folder: folder,
+                                core: info.core
+                            });
                         }
                     }
                     gamesData[folder] = games.sort((a, b) => a.name.localeCompare(b.name, 'es'));
-                } catch (e) { gamesData[folder] = []; }
+                } catch (e) {
+                    gamesData[folder] = [];
+                }
             }
             renderConsoles();
         }
@@ -115,6 +326,7 @@
         function renderConsoles() {
             const container = document.getElementById('consoles-view');
             container.innerHTML = '';
+
             let hasGames = false;
             for (const [folder, info] of Object.entries(CONSOLES)) {
                 const count = gamesData[folder]?.length || 0;
@@ -122,41 +334,116 @@
                     hasGames = true;
                     const btn = document.createElement('div');
                     btn.className = 'console-btn';
-                    btn.innerHTML = '<h2>' + info.name + '</h2><span>' + count + ' juegos</span><button class="download-pack" onclick="event.stopPropagation(); downloadConsolePack(\'' + folder + '\')">⬇ Descargar Pack</button>';
+                    btn.innerHTML = `
+                        <h2>${info.name}</h2>
+                        <span>${count} juegos</span>
+                        <button class="download-pack" onclick="event.stopPropagation(); downloadConsolePack('${folder}')">⬇ Descargar Pack</button>
+                    `;
                     btn.onclick = () => showGames(folder);
                     container.appendChild(btn);
                 }
             }
-            if (!hasGames) container.innerHTML = '<div class="loading">No se encontraron juegos</div>';
+
+            if (!hasGames) {
+                container.innerHTML = '<div class="loading">No se encontraron juegos</div>';
+            }
         }
 
         function showGames(folder) {
             currentConsole = folder;
             allCurrentGames = gamesData[folder] || [];
-            document.getElementById('console-title').textContent = CONSOLES[folder].name + ' (' + allCurrentGames.length + ' juegos)';
+
+            document.getElementById('console-title').textContent =
+                CONSOLES[folder].name + ` (${allCurrentGames.length} juegos)`;
             document.getElementById('consoles-view').style.display = 'none';
             document.getElementById('games-view').classList.add('active');
             document.getElementById('search-input').value = '';
+
             renderGames(allCurrentGames);
+        }
+
+        function createPlaceholder(game, folder) {
+            const icon = CONSOLES[folder]?.icon || '🎮';
+            const shortName = game.name.length > 30 ? game.name.substring(0, 30) + '...' : game.name;
+            return `<div class="no-cover"><div class="icon">${icon}</div><div class="name">${shortName}</div></div>`;
         }
 
         function renderGames(games) {
             const container = document.getElementById('games-list');
             container.innerHTML = '';
-            if (games.length === 0) { container.innerHTML = '<div class="loading">No hay juegos</div>'; return; }
-            games.forEach((game, i) => {
+
+            if (games.length === 0) {
+                container.innerHTML = '<div class="loading">No hay juegos que coincidan</div>';
+                return;
+            }
+
+            games.forEach((game, index) => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
-                const icon = CONSOLES[game.folder]?.icon || '🎮';
-                const shortName = game.name.length > 30 ? game.name.substring(0, 30) + '...' : game.name;
-                card.innerHTML = '<div class="game-cover" onclick="launchGame(gamesData[\'' + game.folder + '\'][' + gamesData[game.folder].indexOf(game) + '])"><div class="no-cover"><div class="icon">' + icon + '</div><div class="name">' + shortName + '</div></div></div><div class="game-info"><div class="game-title" title="' + game.name + '">' + game.name + '</div><div class="game-actions"><button class="btn-play" onclick="launchGame(gamesData[\'' + game.folder + '\'][' + gamesData[game.folder].indexOf(game) + '])">▶ Jugar</button><button class="btn-download" onclick="downloadRom(gamesData[\'' + game.folder + '\'][' + gamesData[game.folder].indexOf(game) + '])">⬇ ROM</button></div></div>';
+                const cacheKey = `${game.folder}/${game.file}`;
+                const cachedImg = imageCache[cacheKey];
+
+                // Si tenemos cache y es null, mostrar placeholder directamente
+                const showPlaceholder = cachedImg === null;
+                const showImage = cachedImg && cachedImg !== null;
+
+                card.innerHTML = `
+                    <div class="game-cover" id="cover-${index}" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">
+                        ${showImage ? `<img src="${cachedImg}" alt="${game.name}" onerror="this.parentElement.innerHTML=createPlaceholder(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}], '${game.folder}')">` :
+                          showPlaceholder ? createPlaceholder(game, game.folder) :
+                          createPlaceholder(game, game.folder)}
+                    </div>
+                    <div class="game-info">
+                        <div class="game-title" title="${game.name}" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">${game.name}</div>
+                        <div class="game-actions">
+                            <button class="btn-play" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">▶ Jugar</button>
+                            <button class="btn-download" onclick="downloadRom(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">⬇ ROM</button>
+                        </div>
+                    </div>
+                `;
                 container.appendChild(card);
+
+                // Cargar imagen si no está en cache
+                if (!showImage && !showPlaceholder) {
+                    loadGameImage(game, index);
+                }
             });
+        }
+
+        async function loadGameImage(game, index) {
+            const coverDiv = document.getElementById(`cover-${index}`);
+            if (!coverDiv) return;
+
+            const imageUrl = await getThumbnail(game);
+
+            if (imageUrl) {
+                const img = new Image();
+                img.onload = () => {
+                    if (coverDiv) {
+                        coverDiv.innerHTML = `<img src="${imageUrl}" alt="${game.name}">`;
+                    }
+                };
+                img.onerror = () => {
+                    if (coverDiv) {
+                        coverDiv.innerHTML = createPlaceholder(game, game.folder);
+                    }
+                };
+                img.src = imageUrl;
+            } else {
+                if (coverDiv) {
+                    coverDiv.innerHTML = createPlaceholder(game, game.folder);
+                }
+            }
         }
 
         function filterGames(query) {
             const q = query.toLowerCase().trim();
-            renderGames(q ? allCurrentGames.filter(g => g.name.toLowerCase().includes(q)) : allCurrentGames);
+            if (!q) {
+                renderGames(allCurrentGames);
+                return;
+            }
+            const filtered = allCurrentGames.filter(g => g.name.toLowerCase().includes(q));
+            renderGames(filtered);
         }
 
         function showConsoles() {
@@ -166,59 +453,114 @@
         }
 
         function downloadRom(game) {
+            const url = `/roms/${game.folder}/${encodeURIComponent(game.file)}`;
             const a = document.createElement('a');
-            a.href = '/roms/' + game.folder + '/' + encodeURIComponent(game.file);
+            a.href = url;
             a.download = game.file;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
         }
 
-        async function downloadConsolePack(folder) { await downloadPack(gamesData[folder], CONSOLES[folder].name); }
-        async function downloadAllRoms() { if (currentConsole) await downloadPack(allCurrentGames, CONSOLES[currentConsole].name); }
+        async function downloadConsolePack(folder) {
+            const games = gamesData[folder];
+            if (!games || games.length === 0) return;
+            await downloadPack(games, CONSOLES[folder].name);
+        }
+
+        async function downloadAllRoms() {
+            if (!currentConsole || allCurrentGames.length === 0) return;
+            await downloadPack(allCurrentGames, CONSOLES[currentConsole].name);
+        }
 
         async function downloadPack(games, consoleName) {
-            if (!games || games.length === 0) return;
             downloadCancelled = false;
             const modal = document.getElementById('progress-modal');
             const progressFill = document.getElementById('progress-fill');
             const progressText = document.getElementById('progress-text');
-            document.getElementById('progress-title').textContent = 'Descargando ' + consoleName + '...';
+            const progressTitle = document.getElementById('progress-title');
+
             modal.style.display = 'flex';
+            progressTitle.textContent = `Descargando ${consoleName}...`;
             progressFill.style.width = '0%';
+            progressText.textContent = `0 / ${games.length} ROMs`;
 
             const zip = new JSZip();
             let completed = 0;
+
             for (const game of games) {
-                if (downloadCancelled) { modal.style.display = 'none'; return; }
+                if (downloadCancelled) {
+                    modal.style.display = 'none';
+                    return;
+                }
+
                 try {
-                    progressText.textContent = 'Descargando: ' + game.name;
-                    const response = await fetch('/roms/' + game.folder + '/' + encodeURIComponent(game.file));
-                    if (response.ok) zip.file(game.file, await response.blob());
-                } catch (e) {}
+                    progressText.textContent = `Descargando: ${game.name}`;
+                    const url = `/roms/${game.folder}/${encodeURIComponent(game.file)}`;
+                    const response = await fetch(url);
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        zip.file(game.file, blob);
+                    }
+                } catch (e) {
+                    console.error(`Error descargando ${game.file}:`, e);
+                }
+
                 completed++;
-                progressFill.style.width = Math.round((completed / games.length) * 100) + '%';
+                const percent = Math.round((completed / games.length) * 100);
+                progressFill.style.width = percent + '%';
+                progressText.textContent = `${completed} / ${games.length} ROMs`;
             }
-            if (downloadCancelled) { modal.style.display = 'none'; return; }
-            progressText.textContent = 'Generando ZIP...';
-            const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(content);
-            a.download = consoleName.replace(/\s+/g, '_') + '_ROMs.zip';
-            a.click();
-            URL.revokeObjectURL(a.href);
+
+            if (downloadCancelled) {
+                modal.style.display = 'none';
+                return;
+            }
+
+            progressText.textContent = 'Generando archivo ZIP...';
+
+            try {
+                const content = await zip.generateAsync({
+                    type: 'blob',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }
+                }, (metadata) => {
+                    progressFill.style.width = metadata.percent.toFixed(0) + '%';
+                });
+
+                const filename = `${consoleName.replace(/\s+/g, '_')}_ROMs.zip`;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            } catch (e) {
+                alert('Error generando el ZIP: ' + e.message);
+            }
+
             modal.style.display = 'none';
         }
 
-        function cancelDownload() { downloadCancelled = true; }
+        function cancelDownload() {
+            downloadCancelled = true;
+        }
 
         function launchGame(game) {
+            const romUrl = `${window.location.origin}/roms/${game.folder}/${encodeURIComponent(game.file)}`;
             const container = document.getElementById('emulator-container');
-            container.innerHTML = '<div id="game" style="width:900px;height:700px;max-width:95vw;max-height:85vh;"></div>';
+            container.innerHTML = `<div id="game" style="width: 900px; height: 700px; max-width: 95vw; max-height: 85vh;"></div>`;
+
             document.getElementById('emulator-overlay').style.display = 'block';
+
             window.EJS_player = '#game';
-            window.EJS_gameUrl = window.location.origin + '/roms/' + game.folder + '/' + encodeURIComponent(game.file);
+            window.EJS_gameUrl = romUrl;
             window.EJS_core = game.core;
             window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
             window.EJS_startOnLoaded = true;
+
             const script = document.createElement('script');
             script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
             document.body.appendChild(script);
@@ -230,7 +572,34 @@
             location.reload();
         }
 
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeEmulator(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeEmulator();
+        });
+
+        async function scanLibrary() {
+            const btn = document.querySelector('.scan-btn');
+            btn.classList.add('scanning');
+            btn.textContent = '🔄 Escaneando...';
+
+            // Limpiar cache de thumbnails para forzar re-busqueda
+            localStorage.removeItem('thumbCache');
+            imageCache = {};
+
+            // Resetear datos
+            gamesData = {};
+
+            // Re-cargar juegos
+            await loadGames();
+
+            // Si estamos viendo una consola, refrescar
+            if (currentConsole) {
+                showGames(currentConsole);
+            }
+
+            btn.classList.remove('scanning');
+            btn.textContent = '🔄 Escanear Biblioteca';
+        }
+
         loadGames();
     </script>
 </body>
