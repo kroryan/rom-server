@@ -46,6 +46,10 @@
         .btn-play, .btn-download, .btn-search-thumb { flex: 1; padding: 8px 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75em; transition: all 0.2s; }
         .btn-play { background: #e94560; color: #fff; }
         .btn-play:hover { background: #ff6b8a; transform: scale(1.05); }
+        .btn-play.disabled { background: #334155; color: #94a3b8; cursor: not-allowed; transform: none; }
+        .btn-play.disabled:hover { background: #334155; transform: none; }
+        .game-cover.no-play { cursor: default; }
+        .game-title.no-play { cursor: default; }
         .btn-download { background: #4ade80; color: #000; }
         .btn-download:hover { background: #6ee7a0; transform: scale(1.05); }
         .btn-search-thumb { background: #8b5cf6; color: #fff; }
@@ -168,7 +172,7 @@
         .loading { text-align: center; padding: 50px; font-size: 20px; color: #aaa; }
 
         #emulator-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; }
-        #emulator-overlay .close-btn { position: fixed; top: 15px; right: 15px; z-index: 1001; background: #e94560; color: #fff; border: none; padding: 15px 30px; cursor: pointer; border-radius: 8px; font-size: 16px; }
+        #emulator-overlay .close-btn { position: fixed; top: 60px; right: 15px; z-index: 1001; background: #e94560; color: #fff; border: none; padding: 12px 24px; cursor: pointer; border-radius: 8px; font-size: 14px; }
         #emulator-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
         #progress-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
@@ -232,19 +236,6 @@
                 <label style="color: #fff; display: block; margin-bottom: 8px;">Seleccionar Consola:</label>
                 <select id="upload-console-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #0f3460; font-size: 16px; background: #0f3460; color: #fff;">
                     <option value="">-- Selecciona una consola --</option>
-                    <option value="gba">Game Boy Advance (.gba)</option>
-                    <option value="gbc">Game Boy Color (.gbc, .gb)</option>
-                    <option value="gb">Game Boy (.gb)</option>
-                    <option value="snes">Super Nintendo (.smc, .sfc)</option>
-                    <option value="nds">Nintendo DS (.nds)</option>
-                    <option value="nes">Nintendo NES (.nes)</option>
-                    <option value="n64">Nintendo 64 (.n64, .z64, .v64)</option>
-                    <option value="genesis">Sega Genesis / Mega Drive (.genesis, .md, .smd)</option>
-                    <option value="sms">Sega Master System (.sms)</option>
-                    <option value="gg">Sega Game Gear (.gg)</option>
-                    <option value="atari2600">Atari 2600 (.a26)</option>
-                    <option value="pce">PC Engine / TurboGrafx-16 (.pce)</option>
-                    <option value="vb">Virtual Boy (.vb)</option>
                 </select>
             </div>
 
@@ -333,90 +324,69 @@
     </div>
 
     <script>
-        const CONSOLES = {
+                const CONSOLES = {
             gba: {
                 name: 'Game Boy Advance',
-                core: 'mgba',
+                core: 'gba',
                 extensions: ['.gba'],
                 icon: '🎮',
                 libretro: 'Nintendo - Game Boy Advance'
             },
             gbc: {
                 name: 'Game Boy Color',
-                core: 'gambatte',
+                core: 'gbc',
                 extensions: ['.gbc', '.gb'],
                 icon: '🟢',
                 libretro: 'Nintendo - Game Boy Color'
             },
             gb: {
                 name: 'Game Boy',
-                core: 'gambatte',
+                core: 'gb',
                 extensions: ['.gb'],
                 icon: '🔵',
                 libretro: 'Nintendo - Game Boy'
             },
-            snes: {
-                name: 'Super Nintendo',
-                core: 'snes9x',
-                extensions: ['.smc', '.sfc'],
-                icon: '🕹️',
-                libretro: 'Nintendo - Super Nintendo Entertainment System'
-            },
             nds: {
                 name: 'Nintendo DS',
-                core: 'melonds',
+                core: 'nds',
                 extensions: ['.nds'],
                 icon: '📱',
                 libretro: 'Nintendo - Nintendo DS'
             },
-            nes: {
-                name: 'Nintendo NES',
-                core: 'fceumm',
-                extensions: ['.nes'],
-                icon: '🕹️',
-                libretro: 'Nintendo - Nintendo Entertainment System'
-            },
             n64: {
                 name: 'Nintendo 64',
-                core: 'mupen64plus_next',
+                core: 'n64',
                 extensions: ['.n64', '.z64', '.v64'],
                 icon: '🎯',
                 libretro: 'Nintendo - Nintendo 64'
             },
-            genesis: {
-                name: 'Sega Genesis / Mega Drive',
-                core: 'genesis_plus_gx',
-                extensions: ['.genesis', '.md', '.smd'],
-                icon: '🔷',
-                libretro: 'Sega - Mega Drive - Genesis'
+            nes: {
+                name: 'Nintendo NES',
+                core: 'nes',
+                extensions: ['.nes'],
+                icon: '🕹️',
+                libretro: 'Nintendo - Nintendo Entertainment System'
             },
-            sms: {
-                name: 'Sega Master System',
-                core: 'genesis_plus_gx',
-                extensions: ['.sms'],
-                icon: '🟣',
-                libretro: 'Sega - Master System'
+            famicom: {
+                name: 'Famicom',
+                core: 'nes',
+                extensions: ['.nes', '.fc', '.fds'],
+                icon: '🎌',
+                libretro: 'Nintendo - Nintendo Entertainment System'
             },
-            gg: {
-                name: 'Sega Game Gear',
-                core: 'genesis_plus_gx',
-                extensions: ['.gg'],
-                icon: '🟤',
-                libretro: 'Sega - Game Gear'
+            snes: {
+                name: 'Super Nintendo',
+                core: 'snes',
+                extensions: ['.smc', '.sfc'],
+                icon: '🕹️',
+                libretro: 'Nintendo - Super Nintendo Entertainment System'
             },
-            atari2600: {
-                name: 'Atari 2600',
-                core: 'stella',
-                extensions: ['.a26'],
-                icon: '🟥',
-                libretro: 'Atari - 2600'
-            },
-            pce: {
-                name: 'PC Engine / TurboGrafx-16',
-                core: 'mednafen_pce_fast',
-                extensions: ['.pce'],
-                icon: '⚡',
-                libretro: 'NEC - PC Engine - TurboGrafx 16'
+            sfc: {
+                name: 'Super Famicom',
+                core: 'snes',
+                extensions: ['.sfc', '.smc'],
+                icon: '🎌',
+                libretro: 'Nintendo - Super Nintendo Entertainment System'
             },
             vb: {
                 name: 'Virtual Boy',
@@ -424,14 +394,227 @@
                 extensions: ['.vb'],
                 icon: '🥽',
                 libretro: 'Nintendo - Virtual Boy'
+            },
+            ps1: {
+                name: 'PlayStation (PS1)',
+                core: 'psx',
+                extensions: ['.bin', '.cue', '.chd', '.img', '.iso', '.pbp'],
+                icon: '💿',
+                libretro: 'Sony - PlayStation'
+            },
+            psp: {
+                name: 'PlayStation Portable (PSP)',
+                core: 'psp',
+                extensions: ['.iso', '.cso', '.pbp'],
+                icon: '🕹️',
+                libretro: 'Sony - PlayStation Portable',
+                threads: true
+            },
+            genesis: {
+                name: 'Sega Genesis / Mega Drive',
+                core: 'segaMD',
+                extensions: ['.genesis', '.md', '.smd', '.gen', '.bin'],
+                icon: '🔷',
+                libretro: 'Sega - Mega Drive - Genesis'
+            },
+            sms: {
+                name: 'Sega Master System',
+                core: 'segaMS',
+                extensions: ['.sms'],
+                icon: '🟣',
+                libretro: 'Sega - Master System'
+            },
+            gg: {
+                name: 'Sega Game Gear',
+                core: 'segaGG',
+                extensions: ['.gg'],
+                icon: '🟤',
+                libretro: 'Sega - Game Gear'
+            },
+            sega32x: {
+                name: 'Sega 32X',
+                core: 'sega32x',
+                extensions: ['.32x', '.bin', '.md'],
+                icon: '🟥',
+                libretro: 'Sega - 32X'
+            },
+            segacd: {
+                name: 'Sega CD / Mega-CD',
+                core: 'segaCD',
+                extensions: ['.cue', '.bin', '.iso', '.chd'],
+                icon: '💿',
+                libretro: 'Sega - Mega-CD - Sega CD'
+            },
+            saturn: {
+                name: 'Sega Saturn',
+                core: 'saturn',
+                extensions: ['.cue', '.bin', '.iso', '.chd'],
+                icon: '🪐',
+                libretro: 'Sega - Saturn'
+            },
+            atari2600: {
+                name: 'Atari 2600',
+                core: 'atari2600',
+                extensions: ['.a26', '.bin'],
+                icon: '🟥',
+                libretro: 'Atari - 2600'
+            },
+            atari5200: {
+                name: 'Atari 5200',
+                core: 'atari5200',
+                extensions: ['.a52', '.bin'],
+                icon: '🟧',
+                libretro: 'Atari - 5200'
+            },
+            atari7800: {
+                name: 'Atari 7800',
+                core: 'atari7800',
+                extensions: ['.a78', '.bin'],
+                icon: '🟨',
+                libretro: 'Atari - 7800'
+            },
+            jaguar: {
+                name: 'Atari Jaguar',
+                core: 'jaguar',
+                extensions: ['.j64', '.jag', '.rom'],
+                icon: '🐆',
+                libretro: 'Atari - Jaguar'
+            },
+            lynx: {
+                name: 'Atari Lynx',
+                core: 'lynx',
+                extensions: ['.lnx'],
+                icon: '🐾',
+                libretro: 'Atari - Lynx'
+            },
+            pce: {
+                name: 'PC Engine / TurboGrafx-16',
+                core: 'pce',
+                extensions: ['.pce'],
+                icon: '⚡',
+                libretro: 'NEC - PC Engine - TurboGrafx 16'
+            },
+            pcfx: {
+                name: 'PC-FX',
+                core: 'pcfx',
+                extensions: ['.cue', '.bin', '.iso', '.chd'],
+                icon: '🟪',
+                libretro: 'NEC - PC-FX'
+            },
+            '3do': {
+                name: '3DO',
+                core: '3do',
+                extensions: ['.cue', '.bin', '.iso', '.chd'],
+                icon: '🎴',
+                libretro: 'Panasonic - 3DO'
+            },
+            amiga: {
+                name: 'Commodore Amiga',
+                core: 'amiga',
+                extensions: ['.adf', '.hdf', '.dms'],
+                icon: '🧩',
+                libretro: 'Commodore - Amiga'
+            },
+            c64: {
+                name: 'Commodore 64',
+                core: 'c64',
+                extensions: ['.d64', '.t64', '.prg', '.tap'],
+                icon: '⌨️',
+                libretro: 'Commodore - 64'
+            },
+            coleco: {
+                name: 'ColecoVision',
+                core: 'coleco',
+                extensions: ['.col'],
+                icon: '🎛️',
+                libretro: 'Coleco - ColecoVision'
+            },
+            arcade: {
+                name: 'Arcade (MAME)',
+                core: 'arcade',
+                extensions: ['.zip', '.7z', '.chd'],
+                icon: '🕹️'
+            },
+            ngp: {
+                name: 'Neo Geo Pocket',
+                core: 'ngp',
+                extensions: ['.ngp'],
+                icon: '🟩',
+                libretro: 'SNK - Neo Geo Pocket'
+            },
+            ngpc: {
+                name: 'Neo Geo Pocket Color',
+                core: 'ngp',
+                extensions: ['.ngc'],
+                icon: '🟩',
+                libretro: 'SNK - Neo Geo Pocket Color'
+            },
+            ws: {
+                name: 'WonderSwan',
+                core: 'ws',
+                extensions: ['.ws'],
+                icon: '🪽',
+                libretro: 'Bandai - WonderSwan'
+            },
+            wsc: {
+                name: 'WonderSwan Color',
+                core: 'ws',
+                extensions: ['.wsc'],
+                icon: '🪽',
+                libretro: 'Bandai - WonderSwan Color'
+            },
+            dos: {
+                name: 'MS-DOS',
+                core: 'dos',
+                extensions: ['.zip', '.exe', '.com', '.bat', '.img'],
+                icon: '🖥️'
+            },
+            doom: {
+                name: 'DOOM',
+                core: 'doom',
+                extensions: ['.wad'],
+                icon: '🔥'
+            },
+            gamecube: {
+                name: 'Nintendo GameCube (solo descarga)',
+                core: null,
+                extensions: ['.iso', '.gcm', '.gcz', '.rvz'],
+                icon: '🧊',
+                playable: false
+            },
+            '3ds': {
+                name: 'Nintendo 3DS (solo descarga)',
+                core: null,
+                extensions: ['.3ds', '.cia', '.cxi'],
+                icon: '📺',
+                playable: false
+            },
+            ps2: {
+                name: 'PlayStation 2 (solo descarga)',
+                core: null,
+                extensions: ['.iso', '.bin', '.img', '.mdf', '.nrg', '.chd'],
+                icon: '🟦',
+                playable: false
             }
         };
+
+        function populateUploadSelect() {
+            const select = document.getElementById('upload-console-select');
+            if (!select) return;
+            const options = ['<option value="">-- Selecciona una consola --</option>'];
+            for (const [key, info] of Object.entries(CONSOLES)) {
+                const suffix = info.playable === false ? ' (solo descarga)' : '';
+                options.push(`<option value=\"${key}\">${info.name}${suffix}</option>`);
+            }
+            select.innerHTML = options.join('');
+        }
 
         let gamesData = {};
         let currentConsole = null;
         let allCurrentGames = [];
         let imageCache = JSON.parse(localStorage.getItem('thumbCache') || '{}');
         let downloadCancelled = false;
+        let thumbsPollTimer = null;
 
         function saveCache() {
             try {
@@ -445,17 +628,24 @@
 
         // Limpiar nombre del ROM para buscar thumbnail
         function cleanGameName(name) {
-            return name
-                // Quitar region tags como [E], [U], [J], (Europe), (USA), etc
-                .replace(/\s*[\[\(][EUJW]\]?\)?/gi, '')
-                .replace(/\s*\((Europe|USA|Japan|World|En|Fr|De|Es|It)[^\)]*\)/gi, '')
-                // Quitar version tags
-                .replace(/\s*\[!?\]?/g, '')
-                .replace(/\s*\(Rev\s*\d*\)/gi, '')
-                // Limpiar caracteres especiales
-                .replace(/[_]/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
+            // Quitar extensión
+            let clean = name.replace(/\.[^.]+$/, '');
+
+            // Normalizar separadores
+            clean = clean.replace(/[_]+/g, ' ');
+
+            // Quitar tags entre [] o () (regiones, idiomas, hacks, versiones, etc.)
+            clean = clean.replace(/\s*[\[(][^\]\)]*[\])]\s*/g, ' ');
+
+            // Quitar sufijos típicos aunque no estén entre paréntesis
+            clean = clean.replace(/\b(Rev\s*\d+|Revision\s*\d+|v\d+(?:\.\d+)*|Beta|Proto|Prototype|Demo|Sample|Hack|Translation|Trainer|Fixed|Unl|Pirate|Alt|Alt\s*\d+)\b/gi, ' ');
+
+            // Quitar duplicados de espacios y separadores
+            clean = clean.replace(/[\-]{2,}/g, '-');
+            clean = clean.replace(/\s*[-—:]\s*$/g, '');
+            clean = clean.replace(/\s+/g, ' ').trim();
+
+            return clean;
         }
 
         // Generar variaciones del nombre para buscar
@@ -507,7 +697,85 @@
             });
         }
 
-        // Buscar thumbnail - primero local, luego libretro
+        
+        const generatedThumbs = new Set();
+
+        async function generateFallbackThumbnail(game) {
+            try {
+                const key = `${game.folder}/${game.file}`;
+                if (generatedThumbs.has(key)) return null;
+                generatedThumbs.add(key);
+
+                const canvas = document.createElement('canvas');
+                const size = 512;
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                // Fondo con gradiente
+                const grad = ctx.createLinearGradient(0, 0, size, size);
+                grad.addColorStop(0, '#0f3460');
+                grad.addColorStop(1, '#1a1a2e');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, size, size);
+
+                // Icono
+                const icon = CONSOLES[game.folder]?.icon || '🎮';
+                ctx.font = '64px Segoe UI, Arial, sans-serif';
+                ctx.fillStyle = '#e94560';
+                ctx.textAlign = 'center';
+                ctx.fillText(icon, size / 2, 90);
+
+                // Nombre del juego (2 líneas máx)
+                const name = game.name || 'Sin nombre';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '28px Segoe UI, Arial, sans-serif';
+                ctx.textAlign = 'center';
+                const words = name.split(' ');
+                const lines = [];
+                let current = '';
+                for (const w of words) {
+                    const test = current ? `${current} ${w}` : w;
+                    if (ctx.measureText(test).width > size - 60 && current) {
+                        lines.push(current);
+                        current = w;
+                    } else {
+                        current = test;
+                    }
+                }
+                if (current) lines.push(current);
+                const shown = lines.slice(0, 2);
+                const startY = 200;
+                shown.forEach((line, i) => {
+                    ctx.fillText(line, size / 2, startY + i * 40);
+                });
+
+                // Consola
+                ctx.fillStyle = '#9ca3af';
+                ctx.font = '22px Segoe UI, Arial, sans-serif';
+                ctx.fillText(CONSOLES[game.folder]?.name || '', size / 2, size - 40);
+
+                const dataUrl = canvas.toDataURL('image/png');
+
+                // Guardar en servidor si posible
+                const uploadServerUrl = window.location.protocol + '//' + window.location.hostname + ':8888/upload/thumbnail_base64';
+                await fetch(uploadServerUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        game: game.name,
+                        folder: game.folder,
+                        data: dataUrl
+                    })
+                }).catch(() => {});
+
+                return dataUrl;
+            } catch (e) {
+                return null;
+            }
+        }
+
+// Buscar thumbnail - primero local, luego libretro
         async function getThumbnail(game) {
             const cacheKey = `${game.folder}/${game.file}`;
 
@@ -556,6 +824,13 @@
                 }
             }
 
+            const generated = await generateFallbackThumbnail(game);
+            if (generated) {
+                imageCache[cacheKey] = generated;
+                saveCache();
+                return generated;
+            }
+
             imageCache[cacheKey] = null;
             saveCache();
             return null;
@@ -576,9 +851,7 @@
                         const filename = decodeURIComponent(match[1]);
                         const lowerName = filename.toLowerCase();
                         if (info.extensions.some(ext => lowerName.endsWith(ext))) {
-                            let cleanName = filename.replace(/\.[^.]+$/, '');
-                            // Eliminar tags de region como [E], [U], [J], [T+Esp], etc.
-                            cleanName = cleanName.replace(/\s*\[[^\]]+\]\s*/g, '').trim();
+                            let cleanName = cleanGameName(filename);
                             games.push({
                                 name: cleanName,
                                 file: filename,
@@ -651,6 +924,7 @@
             }
 
             games.forEach((game, index) => {
+                const playable = CONSOLES[game.folder]?.playable !== false;
                 const card = document.createElement('div');
                 card.className = 'game-card';
                 const cacheKey = `${game.folder}/${game.file}`;
@@ -661,16 +935,16 @@
                 const showImage = cachedImg && cachedImg !== null;
 
                 card.innerHTML = `
-                    <div class="game-cover" id="cover-${index}" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">
+                    <div class="game-cover ${playable ? '' : 'no-play'}" id="cover-${index}" ${playable ? `onclick=\"launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])\"` : ''}>
                         <button class="search-thumb-icon" onclick="event.stopPropagation(); openManualThumbModal(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])" title="Buscar thumbnail manualmente">🔍</button>
                         ${showImage ? `<img src="${cachedImg}" alt="${game.name}" onerror="this.parentElement.innerHTML=createPlaceholder(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}], '${game.folder}')">` :
                           showPlaceholder ? createPlaceholder(game, game.folder) :
                           createPlaceholder(game, game.folder)}
                     </div>
                     <div class="game-info">
-                        <div class="game-title" title="${game.name}" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">${game.name}</div>
+                        <div class="game-title ${playable ? '' : 'no-play'}" title="${game.name}" ${playable ? `onclick=\"launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])\"` : ''}>${game.name}</div>
                         <div class="game-actions">
-                            <button class="btn-play" onclick="launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">▶ Jugar</button>
+                            ${playable ? `<button class=\"btn-play\" onclick=\"launchGame(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])\">▶ Jugar</button>` : `<button class=\"btn-play disabled\" disabled>🚫 Solo descarga</button>`}
                             <button class="btn-download" onclick="downloadRom(gamesData['${game.folder}'][${gamesData[game.folder].indexOf(game)}])">⬇ ROM</button>
                         </div>
                     </div>
@@ -822,16 +1096,46 @@
             downloadCancelled = true;
         }
 
+
+        function isMobileDevice() {
+            return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        }
+
+        function setupVirtualGamepad(info) {
+            if (!isMobileDevice()) return;
+
+            const core = info?.core || '';
+
+            // Usar esquema nativo de EmulatorJS para evitar solapes
+            window.EJS_controlScheme = core;
+            window.EJS_VirtualGamepad = true;
+            if (window.EJS_VirtualGamepadSettings) {
+                delete window.EJS_VirtualGamepadSettings;
+            }
+        }
+
         function launchGame(game) {
+            const info = CONSOLES[game.folder] || {};
+            if (info.playable === false || !game.core) {
+                alert('Esta consola es solo para descarga en la web.');
+                return;
+            }
             const romUrl = `${window.location.origin}/roms/${game.folder}/${encodeURIComponent(game.file)}`;
             const container = document.getElementById('emulator-container');
             container.innerHTML = `<div id="game" style="width: 900px; height: 700px; max-width: 95vw; max-height: 85vh;"></div>`;
 
             document.getElementById('emulator-overlay').style.display = 'block';
 
+            setupVirtualGamepad(info);
+
             window.EJS_player = '#game';
             window.EJS_gameUrl = romUrl;
             window.EJS_core = game.core;
+            if (info.threads) {
+                window.EJS_threads = true;
+            } else {
+                delete window.EJS_threads;
+            }
             window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
             window.EJS_startOnLoaded = true;
 
@@ -1033,6 +1337,7 @@
 
         // Drag and drop para upload
         document.addEventListener('DOMContentLoaded', () => {
+            populateUploadSelect();
             const uploadArea = document.getElementById('upload-area');
 
             uploadArea?.addEventListener('dragover', (e) => {
@@ -1065,58 +1370,101 @@
 
         // Escanear thumbnails faltantes
         async function scanMissingThumbs() {
-            if (!currentConsole || allCurrentGames.length === 0) return;
-
+            if (!currentConsole) return;
             const modal = document.getElementById('thumbs-modal');
             const summary = document.getElementById('thumbs-summary');
             const list = document.getElementById('missing-list');
 
             modal.style.display = 'flex';
-            summary.textContent = 'Escaneando thumbnails...';
-            list.innerHTML = '';
+            summary.style.color = '#f59e0b';
+            summary.textContent = 'Iniciando escaneo de thumbnails (backend)...';
+            list.innerHTML = '<div class="loading">Conectando con el generador...</div>';
 
-            const gamesWithoutThumbs = [];
-            let checked = 0;
+            const baseUrl = window.location.protocol + '//' + window.location.hostname + ':8888';
 
-            for (const game of allCurrentGames) {
-                const localUrl = `/thumbnails/${game.folder}/${encodeURIComponent(game.name)}.png`;
-                const hasLocal = await tryLoadImage(localUrl);
+            const info = CONSOLES[currentConsole] || {};
+            const payload = {
+                console: currentConsole,
+                system: info.libretro || null,
+                extensions: info.extensions || []
+            };
 
-                if (!hasLocal) {
-                    // Intentar libretro
-                    const libretroUrl = await getThumbnail(game);
-                    if (!libretroUrl) {
-                        gamesWithoutThumbs.push(game);
-                    }
-                }
-
-                checked++;
-                summary.textContent = `Escaneando: ${checked}/${allCurrentGames.length} juegos`;
-            }
-
-            // Mostrar resultados
-            if (gamesWithoutThumbs.length === 0) {
-                summary.textContent = `✅ ¡Todos los juegos tienen thumbnail! (${allCurrentGames.length} juegos)`;
-                summary.style.color = '#4ade80';
-                list.innerHTML = '<div style="text-align: center; color: #888;">No faltan thumbnails</div>';
-            } else {
-                summary.textContent = `⚠️ ${gamesWithoutThumbs.length} de ${allCurrentGames.length} juegos sin thumbnail`;
-                summary.style.color = '#f59e0b';
-
-                gamesWithoutThumbs.forEach(game => {
-                    const item = document.createElement('div');
-                    item.className = 'missing-item has-thumb-btn';
-                    item.innerHTML = `
-                        <span>${game.name}</span>
-                        <button class="search-thumb-btn" onclick='openManualThumbModal(${JSON.stringify(game)})'>🔍 Buscar</button>
-                    `;
-                    list.appendChild(item);
+            try {
+                const resp = await fetch(baseUrl + '/thumbs/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
+                if (!resp.ok) {
+                    let msg = 'No se pudo iniciar el escaneo';
+                    try {
+                        const data = await resp.json();
+                        if (data && data.error) msg = data.error;
+                    } catch (e) {}
+                    throw new Error(msg);
+                }
+            } catch (e) {
+                summary.textContent = '❌ Error iniciando el escaneo: ' + e.message;
+                summary.style.color = '#e94560';
+                list.innerHTML = '';
+                return;
             }
+
+            if (thumbsPollTimer) clearInterval(thumbsPollTimer);
+
+            const poll = async () => {
+                try {
+                    const statusResp = await fetch(baseUrl + '/thumbs/status');
+                    const logsResp = await fetch(baseUrl + '/thumbs/logs');
+                    if (!statusResp.ok) throw new Error('Estado no disponible');
+
+                    const status = await statusResp.json();
+                    const logsData = logsResp.ok ? await logsResp.json() : { logs: [] };
+
+                    const total = status.total || 0;
+                    const processed = status.processed || 0;
+                    const found = status.found || 0;
+                    const generated = status.generated || 0;
+                    const failed = status.failed || 0;
+
+                    summary.textContent = `Procesando ${processed}/${total} | descargados: ${found} | generados: ${generated} | fallidos: ${failed}`;
+                    summary.style.color = status.running ? '#f59e0b' : '#4ade80';
+
+                    const logs = (logsData.logs || []).slice(-30).reverse();
+                    if (logs.length === 0) {
+                        list.innerHTML = '<div style="text-align: center; color: #888;">Sin logs por ahora...</div>';
+                    } else {
+                        list.innerHTML = logs.map(l => `<div class="missing-item">${l}</div>`).join('');
+                    }
+
+                    if (!status.running) {
+                        clearInterval(thumbsPollTimer);
+                        thumbsPollTimer = null;
+                        summary.textContent = `✅ Escaneo terminado. Total: ${total} | descargados: ${found} | generados: ${generated} | fallidos: ${failed}`;
+                        summary.style.color = '#4ade80';
+
+                        // Forzar recarga de thumbnails
+                        localStorage.removeItem('thumbCache');
+                        imageCache = {};
+                        await loadGames();
+                        if (currentConsole) showGames(currentConsole);
+                    }
+                } catch (e) {
+                    summary.textContent = '⚠️ Error consultando progreso: ' + e.message;
+                    summary.style.color = '#e94560';
+                }
+            };
+
+            await poll();
+            thumbsPollTimer = setInterval(poll, 1500);
         }
 
         function closeThumbsModal() {
             document.getElementById('thumbs-modal').style.display = 'none';
+            if (thumbsPollTimer) {
+                clearInterval(thumbsPollTimer);
+                thumbsPollTimer = null;
+            }
         }
 
         // Búsqueda manual de thumbnails
@@ -1352,7 +1700,7 @@
 
             try {
                 // Buscar usando la API de GitHub para listar archivos
-                const repoName = system.replace(' ', '_');
+                const repoName = system.replace(/\s+/g, '_');
                 const url = `https://api.github.com/repos/libretro-thumbnails/${repoName}/contents/Named_Boxarts`;
 
                 const response = await fetch(url);
@@ -1396,7 +1744,7 @@
             // Seleccionar este
             event.currentTarget.classList.add('selected');
 
-            const repoName = CONSOLES[currentManualThumbGame.folder]?.libretro.replace(' ', '_');
+            const repoName = CONSOLES[currentManualThumbGame.folder]?.libretro.replace(/\s+/g, '_');
             const imageUrl = `https://raw.githubusercontent.com/libretro-thumbnails/${repoName}/master/Named_Boxarts/${encodeURIComponent(game)}.png`;
 
             selectedLibretroResult = imageUrl;
