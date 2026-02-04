@@ -1,5 +1,93 @@
 # ROM Server
 
+## Guía Detallada de Reproducción (100% reproducible)
+
+Esta guía permite **recrear exactamente la web** del ROM server (UI, servidor de thumbs, y stack Docker) usando el contenido de este repo.
+
+### 0) Requisitos previos
+
+- Docker y Docker Compose instalados.
+- Acceso de escritura a las rutas que se usan como volúmenes.
+- Un host Linux (recomendado).
+
+### 1) Clonar el repositorio
+
+```bash
+git clone https://github.com/kroryan/rom-server.git
+cd rom-server
+```
+
+### 2) Estructura de carpetas del host (OBLIGATORIO)
+
+El sistema usa **bind mounts**. Debes tener estas rutas en el host:
+
+- **ROMs** (lectura/escritura):
+  - `/mnt/Expansion/roms`
+- **Config y assets del server**:
+  - `/home/kroryan/docker-data/roms-server/`
+
+Crea las carpetas necesarias:
+
+```bash
+mkdir -p /mnt/Expansion/roms
+mkdir -p /home/kroryan/docker-data/roms-server/thumbnails
+```
+
+### 3) Copiar archivos del repo a la carpeta activa del servidor
+
+El contenedor `emulador` monta archivos desde `/home/kroryan/docker-data/roms-server/`.  
+Para que la web sea **idéntica**, copia estos archivos desde el repo:
+
+```bash
+cp -f ./index.html /home/kroryan/docker-data/roms-server/index.html
+cp -f ./nginx.conf /home/kroryan/docker-data/roms-server/nginx.conf
+cp -f ./upload_server.py /home/kroryan/docker-data/roms-server/upload_server.py
+cp -f ./.htpasswd /home/kroryan/docker-data/roms-server/.htpasswd
+```
+
+> Si quieres versionar también thumbnails, mantenlos en `/home/kroryan/docker-data/roms-server/thumbnails/`.
+
+### 4) Crear carpetas de consolas
+
+La UI detecta consolas por carpeta y extensión. Crea todas las carpetas necesarias:
+
+```bash
+mkdir -p /mnt/Expansion/roms/{gba,gbc,gb,nds,n64,nes,famicom,snes,sfc,vb,ps1,psp,genesis,sms,gg,sega32x,segacd,saturn,atari2600,atari5200,atari7800,jaguar,lynx,pce,pcfx,3do,amiga,c64,coleco,arcade,ngp,ngpc,ws,wsc,dos,doom,gamecube,3ds,ps2}
+```
+
+### 5) Levantar el stack Docker
+
+```bash
+docker compose up -d
+```
+
+Servicios clave:
+- `emulador` → web UI (puerto `4500`)
+- `upload-server` → subidas y generador de thumbnails (puerto `8888`)
+
+### 6) Abrir la web
+
+```text
+http://<tu-servidor>:4500/
+```
+
+### 7) Subir ROMs
+
+Desde la web:
+- Botón `⬆ Subir ROMs`.
+- Selecciona consola y sube archivos.
+
+También puedes copiar ROMs directo a:
+```
+/mnt/Expansion/roms/<consola>/
+```
+
+### 8) Generar thumbnails
+
+En la web:
+- Entra a una consola.
+- Pulsa `🔍 Escanear Thumbs`.
+
 Un servidor web ligero y autoalojado para gestionar y jugar tus ROMs directamente desde el navegador usando EmulatorJS.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
